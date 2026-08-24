@@ -91,22 +91,27 @@ class AdBlockService {
   Future<void> injectCosmeticFilter(InAppWebViewController controller) async {
     if (!config.enabled) return;
 
-    final css = generateCosmeticCss();
-    if (css.isNotEmpty) {
-      final js = '''
-        (function() {
-          var styleId = 'web2app-adblock-styles';
-          var existingStyle = document.getElementById(styleId);
-          if (!existingStyle) {
-            var style = document.createElement('style');
-            style.id = styleId;
-            style.type = 'text/css';
-            style.innerHTML = `$css`;
-            document.head.appendChild(style);
-          }
-        })();
-      ''';
-      await controller.evaluateJavascript(source: js);
+    try {
+      final css = generateCosmeticCss();
+      if (css.isNotEmpty) {
+        final js = '''
+          (function() {
+            var styleId = 'web2app-adblock-styles';
+            var existingStyle = document.getElementById(styleId);
+            if (!existingStyle) {
+              var style = document.createElement('style');
+              style.id = styleId;
+              style.type = 'text/css';
+              style.innerHTML = `$css`;
+              var target = document.head || document.getElementsByTagName('head')[0] || document.documentElement || document.body;
+              if (target) target.appendChild(style);
+            }
+          })();
+        ''';
+        await controller.evaluateJavascript(source: js);
+      }
+    } catch (e) {
+      // Evaluation error ignored if webview is unready or disposed
     }
   }
 

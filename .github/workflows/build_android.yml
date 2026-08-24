@@ -1,0 +1,80 @@
+name: Android AAB & APK Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Derleme Türü (apk, aab, both)'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - 'both'
+          - 'apk'
+          - 'aab'
+      app_version:
+        description: 'Uygulama Sürüm Adı (örn: 1.0.0)'
+        required: false
+        default: '1.0.0'
+        type: string
+      build_number:
+        description: 'Derleme Numarası (örn: 1)'
+        required: false
+        default: '1'
+        type: string
+      app_config_json:
+        description: 'Özel app_config.json içeriği (Opsiyonel JSON string)'
+        required: false
+        type: string
+  push:
+    branches: [ main, master ]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enjekte Edilmiş app_config.json Uygula
+        if: "${{ github.event.inputs.app_config_json != '' }}"
+        run: |
+          echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Build Android APK
+        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
+        run: flutter build apk --release --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+
+      - name: Build Android App Bundle (AAB)
+        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
+        run: flutter build appbundle --release --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+
+      - name: Upload APK Artifact
+        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      - name: Upload AAB Artifact
+        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-aab
+          path: build/app/outputs/bundle/release/app-release.aab

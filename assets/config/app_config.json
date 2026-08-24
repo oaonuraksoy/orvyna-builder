@@ -1,23 +1,39 @@
 {
   "version": "1.0.0",
   "app_info": {
-    "app_name": "Web2App Showcase",
-    "package_name": "com.web2app.showcase",
+    "app_name": "Web2App",
+    "package_name": "com.web2app.app",
     "web_url": "https://flutter.dev",
-    "user_agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 Web2App/2.0"
+    "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
+    "app_version": "1.0.0",
+    "build_number": 1
   },
   "theme": {
-    "primary_color": "#0175C2",
-    "accent_color": "#02569B",
+    "primary_color": "#2563EB",
+    "accent_color": "#3B82F6",
     "background_color": "#FFFFFF",
-    "status_bar_color": "#01579B",
+    "status_bar_color": "#1D4ED8",
     "status_bar_dark_icons": false,
-    "splash_background_color": "#0175C2",
+    "splash_background_color": "#2563EB",
     "theme_template": "minimalist"
   },
   "navigation": {
     "enabled": true,
     "style": "bottomNavBar",
+    "internal_domains": [
+      "flutter.dev",
+      "docs.flutter.dev",
+      "api.flutter.dev"
+    ],
+    "external_url_patterns": [
+      "*.youtube.com/*",
+      "*.twitter.com/*",
+      "*.x.com/*",
+      "*.github.com/*"
+    ],
+    "open_external_in_browser": true,
+    "enable_deep_links": true,
+    "block_external_urls": false,
     "items": [
       {
         "id": "1",
@@ -35,23 +51,27 @@
       },
       {
         "id": "3",
-        "title": "Topluluk",
-        "url": "https://flutter.dev/community",
-        "icon": "user",
+        "title": "Hakkımızda",
+        "url": "custom://about",
+        "icon": "article",
         "enabled": true
       }
     ]
   },
   "webview_settings": {
+    "show_app_bar": true,
     "pull_to_refresh": true,
     "show_progress_bar": true,
-    "progress_bar_color": "#02569B",
+    "progress_bar_color": "#3B82F6",
     "enable_javascript": true,
     "enable_dom_storage": true,
     "enable_geolocation": true,
     "enable_camera_microphone": true,
     "clear_cache_on_launch": false,
     "open_external_urls_in_browser": true,
+    "force_mobile_viewport": true,
+    "disallow_over_scroll": false,
+    "support_zoom": true,
     "hidden_selectors": [
       "header",
       "nav",
@@ -101,6 +121,42 @@
     "onesignal_app_id": "",
     "prompt_permission_on_launch": true
   },
+  "biometric_auth": {
+    "enabled": false,
+    "prompt_title": "Biyometrik Kimlik Doğrulama",
+    "prompt_subtitle": "Uygulamaya güvenle erişmek için parmak izinizi veya yüzünüzü okutun",
+    "allow_fallback": true,
+    "timeout_seconds": 0
+  },
+  "floating_button": {
+    "enabled": false,
+    "type": "whatsapp",
+    "target": "+905551234567",
+    "icon": "whatsapp",
+    "position": "bottomRight",
+    "background_color": "#25D366",
+    "label": "Canlı Destek",
+    "tooltip": "WhatsApp Destek Hattı",
+    "show_badge": true
+  },
+  "in_app_review": {
+    "enabled": true,
+    "launch_count_trigger": 3,
+    "days_until_prompt": 2,
+    "custom_review_url": "",
+    "min_actions_trigger": 5
+  },
+  "store_metadata": {
+    "app_title": "",
+    "short_description": "",
+    "full_description": "",
+    "keywords": [],
+    "support_url": "",
+    "privacy_policy_url": "",
+    "category": "Shopping",
+    "content_rating": "everyone",
+    "copyright": ""
+  },
   "permissions": {
     "camera": true,
     "microphone": true,
@@ -109,8 +165,33 @@
     "notifications": true
   },
   "offline_settings": {
+    "offline_mode_type": "standardRetry",
+    "custom_offline_html": "",
     "offline_title": "İnternet Bağlantısı Yok",
     "offline_message": "İçeriği görüntülemek için lütfen internet bağlantınızı kontrol ediniz.",
     "retry_button_text": "Yeniden Dene"
+  },
+  "custom_pages": [
+    {
+      "id": "about",
+      "title": "Hakkımızda & Vizyonumuz",
+      "content": "# Hakkımızda\n\nWeb2App ile mobil deneyiminizi en üst seviyeye taşıyın.\n\n## Misyonumuz\n- Hızlı ve güvenilir yerel mobil deneyim sunmak\n- Sıfır gecikme ve sıfır layout kayması ile maksimum akıcılık\n- Güçlü çevrimdışı önbellek desteği\n\n> Kalite ve hız bizim önceliğimizdir.",
+      "layout": "document",
+      "icon": "article",
+      "show_in_navigation": true
+    }
+  ],
+  "system_settings": {
+    "orientation_lock": "auto",
+    "immersive_fullscreen": false,
+    "app_shortcuts": [
+      {
+        "id": "shortcut_home",
+        "title": "Ana Sayfaya Git",
+        "short_label": "Ana Sayfa",
+        "icon": "home",
+        "url": "https://flutter.dev"
+      }
+    ]
   }
 }
