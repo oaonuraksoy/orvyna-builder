@@ -155,6 +155,9 @@ class AppConfig {
   final StoreMetadataConfig storeMetadata;
   final List<CustomPageConfig> customPages;
   final SystemSettingsConfig systemSettings;
+  final AssetsConfig assets;
+  final SigningConfig signing;
+  final AppStoreConnectConfig appStoreConnect;
 
   const AppConfig({
     required this.version,
@@ -173,6 +176,9 @@ class AppConfig {
     this.storeMetadata = const StoreMetadataConfig.defaultConfig(),
     this.customPages = const [],
     this.systemSettings = const SystemSettingsConfig.defaultConfig(),
+    this.assets = const AssetsConfig.defaultConfig(),
+    this.signing = const SigningConfig.defaultConfig(),
+    this.appStoreConnect = const AppStoreConnectConfig.defaultConfig(),
   });
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
@@ -196,6 +202,9 @@ class AppConfig {
               .toList() ??
           const [],
       systemSettings: SystemSettingsConfig.fromJson(json['system_settings'] as Map<String, dynamic>? ?? {}),
+      assets: AssetsConfig.fromJson(json['assets'] as Map<String, dynamic>? ?? {}),
+      signing: SigningConfig.fromJson(json['signing'] as Map<String, dynamic>? ?? {}),
+      appStoreConnect: AppStoreConnectConfig.fromJson(json['app_store_connect'] as Map<String, dynamic>? ?? {}),
     );
   }
 
@@ -222,6 +231,9 @@ class AppConfig {
       'store_metadata': storeMetadata.toJson(),
       'custom_pages': customPages.map((p) => p.toJson()).toList(),
       'system_settings': systemSettings.toJson(),
+      'assets': assets.toJson(),
+      'signing': signing.toJson(),
+      'app_store_connect': appStoreConnect.toJson(),
     };
   }
 
@@ -246,6 +258,9 @@ class AppConfig {
     StoreMetadataConfig? storeMetadata,
     List<CustomPageConfig>? customPages,
     SystemSettingsConfig? systemSettings,
+    AssetsConfig? assets,
+    SigningConfig? signing,
+    AppStoreConnectConfig? appStoreConnect,
   }) {
     return AppConfig(
       version: version ?? this.version,
@@ -264,6 +279,9 @@ class AppConfig {
       storeMetadata: storeMetadata ?? this.storeMetadata,
       customPages: customPages ?? this.customPages,
       systemSettings: systemSettings ?? this.systemSettings,
+      assets: assets ?? this.assets,
+      signing: signing ?? this.signing,
+      appStoreConnect: appStoreConnect ?? this.appStoreConnect,
     );
   }
 }
@@ -1062,5 +1080,138 @@ class StoreMetadataConfig {
     );
   }
 }
+
+/// Uygulama Varlıkları (İkon & Splash Base64) Yapılandırması
+class AssetsConfig {
+  final String iconBase64;
+  final String splashBase64;
+
+  const AssetsConfig({
+    this.iconBase64 = '',
+    this.splashBase64 = '',
+  });
+
+  const AssetsConfig.defaultConfig()
+      : iconBase64 = '',
+        splashBase64 = '';
+
+  factory AssetsConfig.fromJson(Map<String, dynamic> json) {
+    return AssetsConfig(
+      iconBase64: json['icon_base64'] as String? ?? json['icon'] as String? ?? '',
+      splashBase64: json['splash_base64'] as String? ?? json['splash'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'icon_base64': iconBase64,
+    'splash_base64': splashBase64,
+  };
+
+  AssetsConfig copyWith({
+    String? iconBase64,
+    String? splashBase64,
+  }) {
+    return AssetsConfig(
+      iconBase64: iconBase64 ?? this.iconBase64,
+      splashBase64: splashBase64 ?? this.splashBase64,
+    );
+  }
+}
+
+/// Android Keystore İmzalama Yapılandırması
+class SigningConfig {
+  final String keystoreBase64;
+  final String keystorePassword;
+  final String keyAlias;
+  final String keyPassword;
+
+  const SigningConfig({
+    this.keystoreBase64 = '',
+    this.keystorePassword = '',
+    this.keyAlias = '',
+    this.keyPassword = '',
+  });
+
+  const SigningConfig.defaultConfig()
+      : keystoreBase64 = '',
+        keystorePassword = '',
+        keyAlias = '',
+        keyPassword = '';
+
+  factory SigningConfig.fromJson(Map<String, dynamic> json) {
+    return SigningConfig(
+      keystoreBase64: json['keystore_base64'] as String? ?? '',
+      keystorePassword: json['keystore_password'] as String? ?? '',
+      keyAlias: json['key_alias'] as String? ?? '',
+      keyPassword: json['key_password'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'keystore_base64': keystoreBase64,
+    'keystore_password': keystorePassword,
+    'key_alias': keyAlias,
+    'key_password': keyPassword,
+  };
+
+  SigningConfig copyWith({
+    String? keystoreBase64,
+    String? keystorePassword,
+    String? keyAlias,
+    String? keyPassword,
+  }) {
+    return SigningConfig(
+      keystoreBase64: keystoreBase64 ?? this.keystoreBase64,
+      keystorePassword: keystorePassword ?? this.keystorePassword,
+      keyAlias: keyAlias ?? this.keyAlias,
+      keyPassword: keyPassword ?? this.keyPassword,
+    );
+  }
+}
+
+/// iOS App Store Connect & TestFlight API Anahtarı Yapılandırması
+class AppStoreConnectConfig {
+  final String issuerId;
+  final String keyId;
+  final String p8Base64;
+
+  const AppStoreConnectConfig({
+    this.issuerId = '',
+    this.keyId = '',
+    this.p8Base64 = '',
+  });
+
+  const AppStoreConnectConfig.defaultConfig()
+      : issuerId = '',
+        keyId = '',
+        p8Base64 = '';
+
+  factory AppStoreConnectConfig.fromJson(Map<String, dynamic> json) {
+    return AppStoreConnectConfig(
+      issuerId: json['issuer_id'] as String? ?? '',
+      keyId: json['key_id'] as String? ?? '',
+      p8Base64: json['p8_base64'] as String? ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'issuer_id': issuerId,
+    'key_id': keyId,
+    'p8_base64': p8Base64,
+  };
+
+  AppStoreConnectConfig copyWith({
+    String? issuerId,
+    String? keyId,
+    String? p8Base64,
+  }) {
+    return AppStoreConnectConfig(
+      issuerId: issuerId ?? this.issuerId,
+      keyId: keyId ?? this.keyId,
+      p8Base64: p8Base64 ?? this.p8Base64,
+    );
+  }
+}
+
 
 

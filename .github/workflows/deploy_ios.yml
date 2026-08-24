@@ -11,6 +11,16 @@ on:
         options:
           - 'testflight'
           - 'ipa_archive_only'
+      app_version:
+        description: 'Uygulama Sürüm Adı (örn: 1.0.0)'
+        required: false
+        default: '1.0.0'
+        type: string
+      build_number:
+        description: 'Derleme Numarası (örn: 1)'
+        required: false
+        default: '1'
+        type: string
       app_config_json:
         description: 'Özel app_config.json içeriği (Opsiyonel JSON string)'
         required: false
@@ -29,18 +39,40 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+          cache-key: "flutter-:channel:-:version:"
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/.cocoapods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pods-
 
       - name: Enjekte Edilmiş app_config.json Uygula
         if: "${{ github.event.inputs.app_config_json != '' }}"
         run: |
           echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
 
+      - name: Yapılandırma ve Varlıkları Uygula (Bundle ID, İkon, App Store Connect)
+        run: dart tool/apply_app_config.dart --platform=ios
+
       - name: Install Flutter Dependencies
         run: flutter pub get
 
       - name: Build iOS IPA (No Codesign for Archive)
         if: "${{ github.event.inputs.deploy_target == 'ipa_archive_only' }}"
-        run: flutter build ios --release --no-codesign
+        run: flutter build ios --release --no-codesign --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
 
       - name: Build and Deploy to TestFlight via Fastlane
         if: "${{ github.event.inputs.deploy_target == 'testflight' }}"
@@ -54,12 +86,14 @@ jobs:
           else
             echo "Fastfile mevcut değil, standart flutter build ipa çalıştırılıyor..."
             cd ..
-            flutter build ipa --release --no-codesign
+            flutter build ipa --release --no-codesign --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
           fi
 
       - name: Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ios-build-archive
-          path: build/ios/archive/*.xcarchive
+          path: |
+            build/ios/archive/*.xcarchive
+            build/ios/ipa/*.ipa
           if-no-files-found: ignore

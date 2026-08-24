@@ -48,22 +48,37 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+          cache-key: "flutter-:channel:-:version:"
+
+      - name: Cache Flutter dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.pub-cache
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-pub-
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
 
       - name: Enjekte Edilmiş app_config.json Uygula
         if: "${{ github.event.inputs.app_config_json != '' }}"
         run: |
           echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
 
+      - name: Yapılandırma ve Varlıkları Uygula (Paket Adı, İkon, Keystore)
+        run: dart tool/apply_app_config.dart --platform=android
+
       - name: Install Dependencies
         run: flutter pub get
 
       - name: Build Android APK
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
-        run: flutter build apk --release --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+        run: flutter build apk --release --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
 
       - name: Build Android App Bundle (AAB)
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
-        run: flutter build appbundle --release --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+        run: flutter build appbundle --release --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
 
       - name: Upload APK Artifact
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"

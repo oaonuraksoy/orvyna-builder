@@ -193,5 +193,20 @@
         "url": "https://flutter.dev"
       }
     ]
+  },
+  "assets": {
+    "icon_base64": "",
+    "splash_base64": ""
+  },
+  "signing": {
+    "keystore_base64": "",
+    "keystore_password": "",
+    "key_alias": "upload",
+    "key_password": ""
+  },
+  "app_store_connect": {
+    "issuer_id": "",
+    "key_id": "",
+    "p8_base64": ""
   }
 }

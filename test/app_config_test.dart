@@ -507,5 +507,110 @@ void main() {
       expect(serialized['system_settings']['orientation_lock'], equals('landscape'));
       expect(serialized['system_settings']['immersive_fullscreen'], isTrue);
     });
+
+    test('AppConfig Assets, Android Signing, and App Store Connect Serialization', () {
+      final jsonMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': 'Signed App',
+          'package_name': 'com.signed.app',
+          'web_url': 'https://example.com',
+          'user_agent': '',
+          'app_version': '1.0.0',
+          'build_number': 1,
+        },
+        'theme': {
+          'primary_color': '#2563EB',
+          'accent_color': '#3B82F6',
+          'background_color': '#FFFFFF',
+          'status_bar_color': '#1D4ED8',
+          'status_bar_dark_icons': false,
+          'splash_background_color': '#2563EB',
+          'theme_template': 'minimalist',
+        },
+        'navigation': {'enabled': false, 'style': 'none', 'items': []},
+        'webview_settings': {
+          'pull_to_refresh': false,
+          'show_progress_bar': false,
+          'progress_bar_color': '#3B82F6',
+          'enable_javascript': true,
+          'enable_dom_storage': true,
+          'enable_geolocation': false,
+          'enable_camera_microphone': false,
+          'clear_cache_on_launch': false,
+          'open_external_urls_in_browser': true,
+          'custom_css': '',
+          'custom_javascript': '',
+        },
+        'adblock_settings': {
+          'enabled': false,
+          'block_known_ad_hosts': false,
+          'blocked_selectors': [],
+          'blocked_url_patterns': [],
+        },
+        'monetization': {
+          'admob_enabled': false,
+          'banner_enabled': false,
+          'banner_id_android': '',
+          'banner_id_ios': '',
+          'interstitial_enabled': false,
+          'interstitial_id_android': '',
+          'interstitial_id_ios': '',
+          'interstitial_page_interval': 5,
+          'interstitial_time_interval_seconds': 120,
+          'app_open_enabled': false,
+          'app_open_id_android': '',
+          'app_open_id_ios': '',
+        },
+        'notifications': {
+          'onesignal_enabled': false,
+          'onesignal_app_id': '',
+          'prompt_permission_on_launch': false,
+        },
+        'permissions': {
+          'camera': false,
+          'microphone': false,
+          'location': false,
+          'storage': false,
+          'notifications': false,
+        },
+        'offline_settings': {
+          'offline_title': 'Offline',
+          'offline_message': 'No connection',
+          'retry_button_text': 'Retry',
+        },
+        'assets': {
+          'icon_base64': 'aWNvbl9iYXNlNjQ=',
+          'splash_base64': 'c3BsYXNoX2Jhc2U2NA==',
+        },
+        'signing': {
+          'keystore_base64': 'a2V5c3RvcmVfYmFzZTY0',
+          'keystore_password': 'storePassword123',
+          'key_alias': 'myUploadKey',
+          'key_password': 'keyPassword123',
+        },
+        'app_store_connect': {
+          'issuer_id': '69a6de70-ba49-47e5-e053-5b8c7c11a4d1',
+          'key_id': 'D383X7Y27K',
+          'p8_base64': 'cDhfYmFzZTY0',
+        },
+      };
+
+      final config = AppConfig.fromJson(jsonMap);
+      expect(config.assets.iconBase64, equals('aWNvbl9iYXNlNjQ='));
+      expect(config.assets.splashBase64, equals('c3BsYXNoX2Jhc2U2NA=='));
+      expect(config.signing.keystoreBase64, equals('a2V5c3RvcmVfYmFzZTY0'));
+      expect(config.signing.keystorePassword, equals('storePassword123'));
+      expect(config.signing.keyAlias, equals('myUploadKey'));
+      expect(config.signing.keyPassword, equals('keyPassword123'));
+      expect(config.appStoreConnect.issuerId, equals('69a6de70-ba49-47e5-e053-5b8c7c11a4d1'));
+      expect(config.appStoreConnect.keyId, equals('D383X7Y27K'));
+      expect(config.appStoreConnect.p8Base64, equals('cDhfYmFzZTY0'));
+
+      final jsonOut = config.toJson();
+      expect(jsonOut['assets']['icon_base64'], equals('aWNvbl9iYXNlNjQ='));
+      expect(jsonOut['signing']['keystore_password'], equals('storePassword123'));
+      expect(jsonOut['app_store_connect']['key_id'], equals('D383X7Y27K'));
+    });
   });
 }
