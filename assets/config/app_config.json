@@ -1,0 +1,82 @@
+{
+  "version": "1.0.0",
+  "app_info": {
+    "app_name": "Web2App Showcase",
+    "package_name": "com.web2app.showcase",
+    "web_url": "https://flutter.dev",
+    "user_agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 Web2App/1.0"
+  },
+  "theme": {
+    "primary_color": "#0175C2",
+    "accent_color": "#02569B",
+    "background_color": "#FFFFFF",
+    "status_bar_color": "#01579B",
+    "status_bar_dark_icons": false,
+    "splash_background_color": "#0175C2",
+    "theme_template": "minimalist"
+  },
+  "webview_settings": {
+    "pull_to_refresh": true,
+    "show_progress_bar": true,
+    "progress_bar_color": "#02569B",
+    "enable_javascript": true,
+    "enable_dom_storage": true,
+    "enable_geolocation": true,
+    "enable_camera_microphone": true,
+    "clear_cache_on_launch": false,
+    "open_external_urls_in_browser": true,
+    "custom_css": "",
+    "custom_javascript": ""
+  },
+  "adblock_settings": {
+    "enabled": true,
+    "block_known_ad_hosts": true,
+    "blocked_selectors": [
+      ".adsbygoogle",
+      "iframe[src*='doubleclick']",
+      "iframe[src*='googlesyndication']",
+      ".cookie-consent-banner",
+      "#cookie-banner",
+      ".ad-container",
+      ".banner-ad"
+    ],
+    "blocked_url_patterns": [
+      ".*googlesyndication\\.com.*",
+      ".*doubleclick\\.net.*",
+      ".*adservice\\.google\\..*",
+      ".*adnxs\\.com.*",
+      ".*criteo\\.com.*"
+    ]
+  },
+  "monetization": {
+    "admob_enabled": false,
+    "banner_enabled": false,
+    "banner_id_android": "ca-app-pub-3940256099942544/6300978111",
+    "banner_id_ios": "ca-app-pub-3940256099942544/2934735716",
+    "interstitial_enabled": false,
+    "interstitial_id_android": "ca-app-pub-3940256099942544/1033173712",
+    "interstitial_id_ios": "ca-app-pub-3940256099942544/4411468910",
+    "interstitial_page_interval": 5,
+    "interstitial_time_interval_seconds": 120,
+    "app_open_enabled": false,
+    "app_open_id_android": "ca-app-pub-3940256099942544/3419832817",
+    "app_open_id_ios": "ca-app-pub-3940256099942544/5662645252"
+  },
+  "notifications": {
+    "onesignal_enabled": false,
+    "onesignal_app_id": "",
+    "prompt_permission_on_launch": true
+  },
+  "permissions": {
+    "camera": true,
+    "microphone": true,
+    "location": true,
+    "storage": true,
+    "notifications": true
+  },
+  "offline_settings": {
+    "offline_title": "İnternet Bağlantısı Yok",
+    "offline_message": "İçeriği görüntülemek için lütfen internet bağlantınızı kontrol ediniz.",
+    "retry_button_text": "Yeniden Dene"
+  }
+}

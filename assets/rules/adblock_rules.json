@@ -1,0 +1,30 @@
+{
+  "rules_version": "1.0.0",
+  "domains": [
+    "googlesyndication.com",
+    "doubleclick.net",
+    "adservice.google.com",
+    "adnxs.com",
+    "criteo.com",
+    "outbrain.com",
+    "taboola.com",
+    "scorecardresearch.com",
+    "adroll.com",
+    "pubmatic.com",
+    "openx.net",
+    "rubiconproject.com",
+    "moatads.com",
+    "smartadserver.com"
+  ],
+  "selectors": [
+    ".adsbygoogle",
+    "ins.adsbygoogle",
+    "iframe[src*='doubleclick']",
+    "iframe[src*='googlesyndication']",
+    "div[id^='google_ads_iframe']",
+    "div[class*='ad-banner']",
+    "div[class*='sponsored-post']",
+    ".cookie-banner",
+    "#cookie-notice"
+  ]
+}
