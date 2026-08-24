@@ -4,7 +4,7 @@
     "app_name": "Web2App Showcase",
     "package_name": "com.web2app.showcase",
     "web_url": "https://flutter.dev",
-    "user_agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 Web2App/1.0"
+    "user_agent": "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36 Web2App/2.0"
   },
   "theme": {
     "primary_color": "#0175C2",
@@ -14,6 +14,33 @@
     "status_bar_dark_icons": false,
     "splash_background_color": "#0175C2",
     "theme_template": "minimalist"
+  },
+  "navigation": {
+    "enabled": true,
+    "style": "bottomNavBar",
+    "items": [
+      {
+        "id": "1",
+        "title": "Ana Sayfa",
+        "url": "https://flutter.dev",
+        "icon": "home",
+        "enabled": true
+      },
+      {
+        "id": "2",
+        "title": "Belgeler",
+        "url": "https://flutter.dev/docs",
+        "icon": "blog",
+        "enabled": true
+      },
+      {
+        "id": "3",
+        "title": "Topluluk",
+        "url": "https://flutter.dev/community",
+        "icon": "user",
+        "enabled": true
+      }
+    ]
   },
   "webview_settings": {
     "pull_to_refresh": true,
@@ -25,6 +52,13 @@
     "enable_camera_microphone": true,
     "clear_cache_on_launch": false,
     "open_external_urls_in_browser": true,
+    "hidden_selectors": [
+      "header",
+      "nav",
+      "footer",
+      ".navbar"
+    ],
+    "injected_css": "header, nav, footer, .navbar { display: none !important; }",
     "custom_css": "",
     "custom_javascript": ""
   },

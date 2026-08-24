@@ -3,7 +3,7 @@ import 'package:mobile_engine/models/app_config.dart';
 
 void main() {
   group('AppConfig Tests', () {
-    test('fromJson and toJson round-trip integrity', () {
+    test('fromJson and toJson round-trip integrity with Navigation and DOM Hider', () {
       final jsonMap = {
         'version': '1.0.0',
         'app_info': {
@@ -21,6 +21,26 @@ void main() {
           'splash_background_color': '#2563EB',
           'theme_template': 'minimalist',
         },
+        'navigation': {
+          'enabled': true,
+          'style': 'bottomNavBar',
+          'items': [
+            {
+              'id': '1',
+              'title': 'Ana Sayfa',
+              'url': 'https://example.com',
+              'icon': 'home',
+              'enabled': true,
+            },
+            {
+              'id': '2',
+              'title': 'Ürünler',
+              'url': 'https://example.com/shop',
+              'icon': 'shop',
+              'enabled': true,
+            }
+          ],
+        },
         'webview_settings': {
           'pull_to_refresh': true,
           'show_progress_bar': true,
@@ -31,6 +51,8 @@ void main() {
           'enable_camera_microphone': true,
           'clear_cache_on_launch': false,
           'open_external_urls_in_browser': true,
+          'hidden_selectors': ['header', 'footer'],
+          'injected_css': 'header, footer { display: none !important; }',
           'custom_css': 'body { background: red; }',
           'custom_javascript': 'console.log("hello");',
         },
@@ -78,6 +100,12 @@ void main() {
       expect(config.appInfo.appName, equals('Test Web App'));
       expect(config.appInfo.packageName, equals('com.example.testapp'));
       expect(config.appInfo.webUrl, equals('https://example.com'));
+      expect(config.navigation.enabled, isTrue);
+      expect(config.navigation.style, equals('bottomNavBar'));
+      expect(config.navigation.items.length, equals(2));
+      expect(config.navigation.items[0].title, equals('Ana Sayfa'));
+      expect(config.webviewSettings.hiddenSelectors, contains('header'));
+      expect(config.webviewSettings.injectedCss, contains('display: none !important;'));
       expect(config.adblockSettings.enabled, isTrue);
       expect(config.adblockSettings.blockedSelectors, contains('.adsbygoogle'));
       expect(config.monetization.bannerEnabled, isTrue);
@@ -86,6 +114,7 @@ void main() {
       final serialized = config.toJson();
       expect(serialized['version'], equals('1.0.0'));
       expect(serialized['app_info']['app_name'], equals('Test Web App'));
+      expect(serialized['navigation']['enabled'], isTrue);
     });
   });
 }

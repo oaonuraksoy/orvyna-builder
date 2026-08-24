@@ -147,8 +147,40 @@ class _MainEngineScreenState extends State<MainEngineScreen> {
     super.dispose();
   }
 
+  int _selectedNavIndex = 0;
+
+  IconData _resolveIcon(String iconName) {
+    switch (iconName.toLowerCase()) {
+      case 'home':
+        return Icons.home_rounded;
+      case 'shop':
+        return Icons.shopping_bag_rounded;
+      case 'cart':
+        return Icons.shopping_cart_rounded;
+      case 'user':
+        return Icons.person_rounded;
+      case 'search':
+        return Icons.search_rounded;
+      case 'settings':
+        return Icons.settings_rounded;
+      case 'blog':
+        return Icons.article_rounded;
+      case 'chat':
+        return Icons.chat_bubble_rounded;
+      case 'info':
+        return Icons.info_outline_rounded;
+      default:
+        return Icons.link_rounded;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final navConfig = widget.config.navigation;
+    final activeNavItems = navConfig.items.where((i) => i.enabled).toList();
+    final hasDrawer = navConfig.enabled && navConfig.style == 'drawer' && activeNavItems.isNotEmpty;
+    final hasBottomBar = navConfig.enabled && navConfig.style == 'bottomNavBar' && activeNavItems.isNotEmpty;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -164,8 +196,77 @@ class _MainEngineScreenState extends State<MainEngineScreen> {
       },
       child: Scaffold(
         backgroundColor: widget.config.theme.backgroundColor,
+        appBar: widget.config.webviewSettings.showAppBar
+            ? AppBar(
+                backgroundColor: widget.config.theme.primaryColor,
+                foregroundColor: Colors.white,
+                elevation: 0.5,
+                title: Text(
+                  widget.config.appInfo.appName,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17.0),
+                ),
+                centerTitle: false,
+                actions: [
+                  IconButton(
+                    icon: const Icon(Icons.refresh_rounded, size: 22.0),
+                    tooltip: 'Yenile',
+                    onPressed: () {
+                      _webViewKey.currentState?.webViewController?.reload();
+                    },
+                  ),
+                ],
+              )
+            : null,
+        drawer: hasDrawer
+            ? Drawer(
+                backgroundColor: widget.config.theme.backgroundColor,
+                child: ListView(
+                  padding: EdgeInsets.zero,
+                  children: [
+                    DrawerHeader(
+                      decoration: BoxDecoration(
+                        color: widget.config.theme.primaryColor,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Icon(Icons.apps_rounded, color: widget.config.theme.primaryColor, size: 28.0),
+                          ),
+                          const SizedBox(height: 10.0),
+                          Text(
+                            widget.config.appInfo.appName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    ...activeNavItems.map((item) {
+                      return ListTile(
+                        leading: Icon(_resolveIcon(item.icon), color: widget.config.theme.primaryColor),
+                        title: Text(item.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        onTap: () {
+                          Navigator.pop(context);
+                          _webViewKey.currentState?.loadUrl(item.url);
+                        },
+                      );
+                    }),
+                  ],
+                ),
+              )
+            : null,
         body: SafeArea(
-          top: true,
+          top: !widget.config.webviewSettings.showAppBar,
           bottom: false,
           child: Column(
             children: [
@@ -190,6 +291,24 @@ class _MainEngineScreenState extends State<MainEngineScreen> {
             ],
           ),
         ),
+        bottomNavigationBar: hasBottomBar
+            ? NavigationBar(
+                selectedIndex: _selectedNavIndex.clamp(0, activeNavItems.length - 1),
+                backgroundColor: widget.config.theme.backgroundColor,
+                indicatorColor: widget.config.theme.primaryColor.withValues(alpha: 0.2),
+                destinations: activeNavItems.map((item) {
+                  return NavigationDestination(
+                    icon: Icon(_resolveIcon(item.icon)),
+                    label: item.title,
+                  );
+                }).toList(),
+                onDestinationSelected: (index) {
+                  setState(() => _selectedNavIndex = index);
+                  final item = activeNavItems[index];
+                  _webViewKey.currentState?.loadUrl(item.url);
+                },
+              )
+            : null,
       ),
     );
   }

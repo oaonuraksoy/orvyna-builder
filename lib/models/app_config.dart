@@ -6,6 +6,7 @@ class AppConfig {
   final String version;
   final AppInfoConfig appInfo;
   final ThemeConfig theme;
+  final NavigationConfig navigation;
   final WebViewSettingsConfig webviewSettings;
   final AdblockSettingsConfig adblockSettings;
   final MonetizationConfig monetization;
@@ -17,6 +18,7 @@ class AppConfig {
     required this.version,
     required this.appInfo,
     required this.theme,
+    this.navigation = const NavigationConfig.defaultConfig(),
     required this.webviewSettings,
     required this.adblockSettings,
     required this.monetization,
@@ -30,6 +32,7 @@ class AppConfig {
       version: json['version'] as String? ?? '1.0.0',
       appInfo: AppInfoConfig.fromJson(json['app_info'] as Map<String, dynamic>? ?? {}),
       theme: ThemeConfig.fromJson(json['theme'] as Map<String, dynamic>? ?? {}),
+      navigation: NavigationConfig.fromJson(json['navigation'] as Map<String, dynamic>? ?? {}),
       webviewSettings: WebViewSettingsConfig.fromJson(json['webview_settings'] as Map<String, dynamic>? ?? {}),
       adblockSettings: AdblockSettingsConfig.fromJson(json['adblock_settings'] as Map<String, dynamic>? ?? {}),
       monetization: MonetizationConfig.fromJson(json['monetization'] as Map<String, dynamic>? ?? {}),
@@ -49,6 +52,7 @@ class AppConfig {
       'version': version,
       'app_info': appInfo.toJson(),
       'theme': theme.toJson(),
+      'navigation': navigation.toJson(),
       'webview_settings': webviewSettings.toJson(),
       'adblock_settings': adblockSettings.toJson(),
       'monetization': monetization.toJson(),
@@ -66,6 +70,7 @@ class AppConfig {
     String? version,
     AppInfoConfig? appInfo,
     ThemeConfig? theme,
+    NavigationConfig? navigation,
     WebViewSettingsConfig? webviewSettings,
     AdblockSettingsConfig? adblockSettings,
     MonetizationConfig? monetization,
@@ -77,6 +82,7 @@ class AppConfig {
       version: version ?? this.version,
       appInfo: appInfo ?? this.appInfo,
       theme: theme ?? this.theme,
+      navigation: navigation ?? this.navigation,
       webviewSettings: webviewSettings ?? this.webviewSettings,
       adblockSettings: adblockSettings ?? this.adblockSettings,
       monetization: monetization ?? this.monetization,
@@ -85,6 +91,74 @@ class AppConfig {
       offlineSettings: offlineSettings ?? this.offlineSettings,
     );
   }
+}
+
+class NavigationItemConfig {
+  final String id;
+  final String title;
+  final String url;
+  final String icon;
+  final bool enabled;
+
+  const NavigationItemConfig({
+    required this.id,
+    required this.title,
+    required this.url,
+    required this.icon,
+    this.enabled = true,
+  });
+
+  factory NavigationItemConfig.fromJson(Map<String, dynamic> json) {
+    return NavigationItemConfig(
+      id: json['id']?.toString() ?? '',
+      title: json['title']?.toString() ?? '',
+      url: json['url']?.toString() ?? '',
+      icon: json['icon']?.toString() ?? 'home',
+      enabled: json['enabled'] as bool? ?? true,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'url': url,
+    'icon': icon,
+    'enabled': enabled,
+  };
+}
+
+class NavigationConfig {
+  final bool enabled;
+  final String style; // 'bottomNavBar', 'drawer', 'none'
+  final List<NavigationItemConfig> items;
+
+  const NavigationConfig({
+    required this.enabled,
+    required this.style,
+    required this.items,
+  });
+
+  const NavigationConfig.defaultConfig()
+      : enabled = false,
+        style = 'none',
+        items = const [];
+
+  factory NavigationConfig.fromJson(Map<String, dynamic> json) {
+    return NavigationConfig(
+      enabled: json['enabled'] as bool? ?? false,
+      style: json['style'] as String? ?? 'none',
+      items: (json['items'] as List<dynamic>?)
+              ?.map((item) => NavigationItemConfig.fromJson(item as Map<String, dynamic>))
+              .toList() ??
+          const [],
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+    'enabled': enabled,
+    'style': style,
+    'items': items.map((e) => e.toJson()).toList(),
+  };
 }
 
 class AppInfoConfig {
@@ -180,6 +254,7 @@ class ThemeConfig {
 }
 
 class WebViewSettingsConfig {
+  final bool showAppBar;
   final bool pullToRefresh;
   final bool showProgressBar;
   final String progressBarColorHex;
@@ -189,10 +264,13 @@ class WebViewSettingsConfig {
   final bool enableCameraMicrophone;
   final bool clearCacheOnLaunch;
   final bool openExternalUrlsInBrowser;
+  final List<String> hiddenSelectors;
+  final String injectedCss;
   final String customCss;
   final String customJavascript;
 
   const WebViewSettingsConfig({
+    this.showAppBar = true,
     required this.pullToRefresh,
     required this.showProgressBar,
     required this.progressBarColorHex,
@@ -202,12 +280,15 @@ class WebViewSettingsConfig {
     required this.enableCameraMicrophone,
     required this.clearCacheOnLaunch,
     required this.openExternalUrlsInBrowser,
+    this.hiddenSelectors = const [],
+    this.injectedCss = '',
     required this.customCss,
     required this.customJavascript,
   });
 
   factory WebViewSettingsConfig.fromJson(Map<String, dynamic> json) {
     return WebViewSettingsConfig(
+      showAppBar: json['show_app_bar'] as bool? ?? true,
       pullToRefresh: json['pull_to_refresh'] as bool? ?? true,
       showProgressBar: json['show_progress_bar'] as bool? ?? true,
       progressBarColorHex: json['progress_bar_color'] as String? ?? '#3B82F6',
@@ -217,12 +298,15 @@ class WebViewSettingsConfig {
       enableCameraMicrophone: json['enable_camera_microphone'] as bool? ?? true,
       clearCacheOnLaunch: json['clear_cache_on_launch'] as bool? ?? false,
       openExternalUrlsInBrowser: json['open_external_urls_in_browser'] as bool? ?? true,
+      hiddenSelectors: (json['hidden_selectors'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+      injectedCss: json['injected_css'] as String? ?? '',
       customCss: json['custom_css'] as String? ?? '',
       customJavascript: json['custom_javascript'] as String? ?? '',
     );
   }
 
   Map<String, dynamic> toJson() => {
+    'show_app_bar': showAppBar,
     'pull_to_refresh': pullToRefresh,
     'show_progress_bar': showProgressBar,
     'progress_bar_color': progressBarColorHex,
@@ -232,6 +316,8 @@ class WebViewSettingsConfig {
     'enable_camera_microphone': enableCameraMicrophone,
     'clear_cache_on_launch': clearCacheOnLaunch,
     'open_external_urls_in_browser': openExternalUrlsInBrowser,
+    'hidden_selectors': hiddenSelectors,
+    'injected_css': injectedCss,
     'custom_css': customCss,
     'custom_javascript': customJavascript,
   };
