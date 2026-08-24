@@ -23,7 +23,7 @@ class NotificationService {
 
     try {
       if (kDebugMode) {
-        OneSignal.Debug.setLogLevel(OSLogLevel.VERBOSE);
+        OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
       }
 
       // OneSignal Başlatma
