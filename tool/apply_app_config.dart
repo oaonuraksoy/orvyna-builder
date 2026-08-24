@@ -199,6 +199,49 @@ void _applyAndroidConfig({
 ''');
   print('  ✓ res/values/strings.xml güncellendi');
 
+  final stylesFile = File('$androidRoot/app/src/main/res/values/styles.xml');
+  if (!stylesFile.existsSync()) {
+    stylesFile.parent.createSync(recursive: true);
+    stylesFile.writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
+''');
+    print('  ✓ res/values/styles.xml oluşturuldu');
+  }
+
+  final nightStylesFile = File('$androidRoot/app/src/main/res/values-night/styles.xml');
+  if (!nightStylesFile.existsSync()) {
+    nightStylesFile.parent.createSync(recursive: true);
+    nightStylesFile.writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="LaunchTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">@drawable/launch_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Black.NoTitleBar">
+        <item name="android:windowBackground">?android:colorBackground</item>
+    </style>
+</resources>
+''');
+    print('  ✓ res/values-night/styles.xml oluşturuldu');
+  }
+
+  final launchBgFile = File('$androidRoot/app/src/main/res/drawable/launch_background.xml');
+  if (!launchBgFile.existsSync()) {
+    launchBgFile.parent.createSync(recursive: true);
+    launchBgFile.writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@android:color/white" />
+</layer-list>
+''');
+    print('  ✓ res/drawable/launch_background.xml oluşturuldu');
+  }
+
   // 3. android/app/build.gradle
   final appBuildGradle = File('$androidRoot/app/build.gradle');
   if (appBuildGradle.existsSync()) {
@@ -229,7 +272,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "$packageName"
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -240,7 +283,7 @@ android {
     defaultConfig {
         applicationId = "$packageName"
         minSdk = 21
-        targetSdk = 34
+        targetSdk = 35
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
@@ -273,6 +316,7 @@ flutter {
   }
 
   // 4. İkon Dosyaları (Base64 -> PNG)
+  final resDir = Directory('$androidRoot/app/src/main/res');
   if (iconBase64.isNotEmpty) {
     try {
       final bytes = base64Decode(iconBase64.replaceAll(RegExp(r'\s+'), ''));
@@ -284,14 +328,18 @@ flutter {
         'mipmap-xxxhdpi',
       ];
       for (final dir in mipmapDirs) {
-        final iconFile = File('$androidRoot/app/src/main/res/$dir/ic_launcher.png');
+        final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
         iconFile.parent.createSync(recursive: true);
         iconFile.writeAsBytesSync(bytes);
       }
       print('  ✓ Android mipmap ikonları Base64 verisinden üretildi (5 çözünürlük)');
     } catch (e) {
       print('  ⚠️ İkon Base64 çözülemedi: $e');
+      _ensureDefaultAndroidIcons(resDir);
     }
+  } else {
+    _ensureDefaultAndroidIcons(resDir);
+    print('  ✓ Android mipmap varsayılan ikonları kontrol edildi / üretildi');
   }
 
   // 5. Splash Görseli
@@ -533,3 +581,25 @@ end
     }
   }
 }
+
+/// Android mipmap ikonlarının varlığını garanti eder, yoksa varsayılan 1x1 PNG yazar
+void _ensureDefaultAndroidIcons(Directory resDir) {
+  const defaultPngBase64 =
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  final defaultBytes = base64Decode(defaultPngBase64);
+  final mipmapDirs = [
+    'mipmap-mdpi',
+    'mipmap-hdpi',
+    'mipmap-xhdpi',
+    'mipmap-xxhdpi',
+    'mipmap-xxxhdpi',
+  ];
+  for (final dir in mipmapDirs) {
+    final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
+    if (!iconFile.existsSync()) {
+      iconFile.parent.createSync(recursive: true);
+      iconFile.writeAsBytesSync(defaultBytes);
+    }
+  }
+}
+

@@ -117,6 +117,19 @@ void main() {
       expect(mipmapHdpi.existsSync(), isTrue);
       expect(mipmapHdpi.lengthSync(), greaterThan(0));
 
+      // Android Styles & Themes Verification
+      final stylesXml = File('${tempDir.path}/android/app/src/main/res/values/styles.xml');
+      expect(stylesXml.existsSync(), isTrue);
+      expect(stylesXml.readAsStringSync(), contains('name="LaunchTheme"'));
+
+      final nightStylesXml = File('${tempDir.path}/android/app/src/main/res/values-night/styles.xml');
+      expect(nightStylesXml.existsSync(), isTrue);
+      expect(nightStylesXml.readAsStringSync(), contains('Theme.Black.NoTitleBar'));
+
+      final launchBgXml = File('${tempDir.path}/android/app/src/main/res/drawable/launch_background.xml');
+      expect(launchBgXml.existsSync(), isTrue);
+      expect(launchBgXml.readAsStringSync(), contains('@android:color/white'));
+
       // 4. Android Keystore and key.properties Verification
       final keystore = File('${tempDir.path}/android/upload.keystore');
       expect(keystore.existsSync(), isTrue);
@@ -151,6 +164,41 @@ void main() {
       final fastfile = File('${tempDir.path}/ios/fastlane/Fastfile');
       expect(fastfile.existsSync(), isTrue);
       expect(fastfile.readAsStringSync(), contains('D383X7Y27K'));
+    });
+
+    test('applyAppConfig falls back to default Android icons when icon_base64 is empty', () {
+      final noIconConfigFile = File('${tempDir.path}/app_config_no_icon.json');
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': 'Default Icon App',
+          'package_name': 'com.defaulticon.app',
+        },
+        'assets': {
+          'icon_base64': '',
+        },
+      };
+      noIconConfigFile.writeAsStringSync(json.encode(configMap));
+
+      applyAppConfig(
+        configPath: noIconConfigFile.path,
+        platform: 'android',
+        baseDir: tempDir,
+      );
+
+      final mipmapDirs = [
+        'mipmap-mdpi',
+        'mipmap-hdpi',
+        'mipmap-xhdpi',
+        'mipmap-xxhdpi',
+        'mipmap-xxxhdpi',
+      ];
+
+      for (final dir in mipmapDirs) {
+        final iconFile = File('${tempDir.path}/android/app/src/main/res/$dir/ic_launcher.png');
+        expect(iconFile.existsSync(), isTrue);
+        expect(iconFile.lengthSync(), greaterThan(0));
+      }
     });
   });
 }

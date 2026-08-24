@@ -26,8 +26,6 @@ on:
         description: 'Özel app_config.json içeriği (Opsiyonel JSON string)'
         required: false
         type: string
-  push:
-    branches: [ main, master ]
 
 jobs:
   build-android:
@@ -74,11 +72,11 @@ jobs:
 
       - name: Build Android APK
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
-        run: flutter build apk --release --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+        run: flutter build apk --release --no-pub --android-skip-build-dependency-validation --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
 
       - name: Build Android App Bundle (AAB)
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
-        run: flutter build appbundle --release --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+        run: flutter build appbundle --release --no-pub --android-skip-build-dependency-validation --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
 
       - name: Upload APK Artifact
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
