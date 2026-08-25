@@ -557,8 +557,8 @@ class WebViewSettingsConfig {
       progressBarColorHex: json['progress_bar_color'] as String? ?? '#3B82F6',
       enableJavascript: json['enable_javascript'] as bool? ?? true,
       enableDomStorage: json['enable_dom_storage'] as bool? ?? true,
-      enableGeolocation: json['enable_geolocation'] as bool? ?? true,
-      enableCameraMicrophone: json['enable_camera_microphone'] as bool? ?? true,
+      enableGeolocation: json['enable_geolocation'] as bool? ?? false,
+      enableCameraMicrophone: json['enable_camera_microphone'] as bool? ?? false,
       clearCacheOnLaunch: json['clear_cache_on_launch'] as bool? ?? false,
       openExternalUrlsInBrowser: json['open_external_urls_in_browser'] as bool? ?? true,
       hiddenSelectors: (json['hidden_selectors'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
@@ -731,13 +731,20 @@ class PermissionsConfig {
     required this.notifications,
   });
 
+  const PermissionsConfig.defaultConfig()
+      : camera = false,
+        microphone = false,
+        location = false,
+        storage = false,
+        notifications = false;
+
   factory PermissionsConfig.fromJson(Map<String, dynamic> json) {
     return PermissionsConfig(
-      camera: json['camera'] as bool? ?? true,
-      microphone: json['microphone'] as bool? ?? true,
-      location: json['location'] as bool? ?? true,
-      storage: json['storage'] as bool? ?? true,
-      notifications: json['notifications'] as bool? ?? true,
+      camera: json['camera'] as bool? ?? false,
+      microphone: json['microphone'] as bool? ?? false,
+      location: json['location'] as bool? ?? false,
+      storage: json['storage'] as bool? ?? false,
+      notifications: json['notifications'] as bool? ?? false,
     );
   }
 

@@ -65,8 +65,8 @@
     "progress_bar_color": "#3B82F6",
     "enable_javascript": true,
     "enable_dom_storage": true,
-    "enable_geolocation": true,
-    "enable_camera_microphone": true,
+    "enable_geolocation": false,
+    "enable_camera_microphone": false,
     "clear_cache_on_launch": false,
     "open_external_urls_in_browser": true,
     "force_mobile_viewport": true,
@@ -158,11 +158,11 @@
     "copyright": ""
   },
   "permissions": {
-    "camera": true,
-    "microphone": true,
-    "location": true,
-    "storage": true,
-    "notifications": true
+    "camera": false,
+    "microphone": false,
+    "location": false,
+    "storage": false,
+    "notifications": false
   },
   "offline_settings": {
     "offline_mode_type": "standardRetry",

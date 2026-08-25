@@ -102,13 +102,21 @@ void main() {
 
       // 1. Android Manifest Verification
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
-      final manifestContent = manifest.readAsStringSync();
-      expect(manifestContent, contains('android:label="My Super App"'));
+      final manifestContent = manifest.readAsStringSync(encoding: utf8);
+      expect(manifestContent, contains('android:label="@string/app_name"'));
       expect(manifestContent, contains('package="com.mysuper.app"'));
+      expect(manifestContent, contains('com.google.android.gms.ads.APPLICATION_ID'));
+      expect(manifestContent, contains('ca-app-pub-3940256099942544~3347511713'));
+
+      // Android strings.xml Verification
+      final stringsFile = File('${tempDir.path}/android/app/src/main/res/values/strings.xml');
+      expect(stringsFile.existsSync(), isTrue);
+      final stringsContent = stringsFile.readAsStringSync(encoding: utf8);
+      expect(stringsContent, contains('<string name="app_name">My Super App</string>'));
 
       // 2. Android build.gradle Verification
       final buildGradle = File('${tempDir.path}/android/app/build.gradle');
-      final gradleContent = buildGradle.readAsStringSync();
+      final gradleContent = buildGradle.readAsStringSync(encoding: utf8);
       expect(gradleContent, contains('applicationId = "com.mysuper.app"'));
       expect(gradleContent, contains('namespace = "com.mysuper.app"'));
 
@@ -120,36 +128,36 @@ void main() {
       // Android Styles & Themes Verification
       final stylesXml = File('${tempDir.path}/android/app/src/main/res/values/styles.xml');
       expect(stylesXml.existsSync(), isTrue);
-      expect(stylesXml.readAsStringSync(), contains('name="LaunchTheme"'));
+      expect(stylesXml.readAsStringSync(encoding: utf8), contains('name="LaunchTheme"'));
 
       final nightStylesXml = File('${tempDir.path}/android/app/src/main/res/values-night/styles.xml');
       expect(nightStylesXml.existsSync(), isTrue);
-      expect(nightStylesXml.readAsStringSync(), contains('Theme.Black.NoTitleBar'));
+      expect(nightStylesXml.readAsStringSync(encoding: utf8), contains('Theme.Black.NoTitleBar'));
 
       final launchBgXml = File('${tempDir.path}/android/app/src/main/res/drawable/launch_background.xml');
       expect(launchBgXml.existsSync(), isTrue);
-      expect(launchBgXml.readAsStringSync(), contains('@android:color/white'));
+      expect(launchBgXml.readAsStringSync(encoding: utf8), contains('@android:color/white'));
 
       // 4. Android Keystore and key.properties Verification
       final keystore = File('${tempDir.path}/android/upload.keystore');
       expect(keystore.existsSync(), isTrue);
-      expect(keystore.readAsStringSync(), equals('DUMMY_KEYSTORE_BASE64'));
+      expect(keystore.readAsStringSync(encoding: utf8), equals('DUMMY_KEYSTORE_BASE64'));
 
       final keyProps = File('${tempDir.path}/android/key.properties');
       expect(keyProps.existsSync(), isTrue);
-      final keyPropsContent = keyProps.readAsStringSync();
+      final keyPropsContent = keyProps.readAsStringSync(encoding: utf8);
       expect(keyPropsContent, contains('storePassword=storePassword123'));
       expect(keyPropsContent, contains('keyAlias=mySuperAlias'));
       expect(keyPropsContent, contains('keyPassword=keyPassword123'));
 
       // 5. iOS Info.plist Verification
       final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
-      final plistContent = infoPlist.readAsStringSync();
+      final plistContent = infoPlist.readAsStringSync(encoding: utf8);
       expect(plistContent, contains('<string>My Super App</string>'));
 
       // 6. iOS project.pbxproj Verification
       final pbxproj = File('${tempDir.path}/ios/Runner.xcodeproj/project.pbxproj');
-      final pbxContent = pbxproj.readAsStringSync();
+      final pbxContent = pbxproj.readAsStringSync(encoding: utf8);
       expect(pbxContent, contains('PRODUCT_BUNDLE_IDENTIFIER = com.mysuper.app;'));
 
       // 7. iOS AppIcon Verification
@@ -163,7 +171,7 @@ void main() {
 
       final fastfile = File('${tempDir.path}/ios/fastlane/Fastfile');
       expect(fastfile.existsSync(), isTrue);
-      expect(fastfile.readAsStringSync(), contains('D383X7Y27K'));
+      expect(fastfile.readAsStringSync(encoding: utf8), contains('D383X7Y27K'));
     });
 
     test('applyAppConfig falls back to default Android icons when icon_base64 is empty', () {
@@ -178,7 +186,7 @@ void main() {
           'icon_base64': '',
         },
       };
-      noIconConfigFile.writeAsStringSync(json.encode(configMap));
+      noIconConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
 
       applyAppConfig(
         configPath: noIconConfigFile.path,
@@ -199,6 +207,42 @@ void main() {
         expect(iconFile.existsSync(), isTrue);
         expect(iconFile.lengthSync(), greaterThan(0));
       }
+    });
+
+    test('applyAppConfig correctly handles custom AdMob ID and Turkish UTF-8 characters', () {
+      final turkishConfigFile = File('${tempDir.path}/app_config_turkish.json');
+      const turkishAppName = 'Türkçe Uygulama Adı ğüşöçıİ ÖĞÜŞÇİ';
+      const customAdmobId = 'ca-app-pub-1234567890123456~9876543210';
+
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': turkishAppName,
+          'package_name': 'com.turkish.app',
+        },
+        'monetization': {
+          'admob_app_id_android': customAdmobId,
+        },
+      };
+      turkishConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
+
+      applyAppConfig(
+        configPath: turkishConfigFile.path,
+        platform: 'android',
+        baseDir: tempDir,
+      );
+
+      // Verify strings.xml contains exact Turkish characters
+      final stringsFile = File('${tempDir.path}/android/app/src/main/res/values/strings.xml');
+      expect(stringsFile.existsSync(), isTrue);
+      final stringsContent = stringsFile.readAsStringSync(encoding: utf8);
+      expect(stringsContent, contains('<string name="app_name">$turkishAppName</string>'));
+
+      // Verify AndroidManifest.xml contains custom AdMob ID and @string/app_name
+      final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
+      final manifestContent = manifest.readAsStringSync(encoding: utf8);
+      expect(manifestContent, contains('android:label="@string/app_name"'));
+      expect(manifestContent, contains(customAdmobId));
     });
   });
 }

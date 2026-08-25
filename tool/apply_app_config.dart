@@ -4,7 +4,7 @@ import 'dart:io';
 /// Web2App Bulut & CI/CD Konfigürasyon Uygulayıcı (Build Preprocessor)
 ///
 /// Bu fonksiyon / script, enjekte edilmiş `app_config.json` dosyasını okuyarak:
-/// 1. AndroidManifest.xml içindeki `android:label` ve strings.xml değerlerini günceller.
+/// 1. AndroidManifest.xml içindeki `android:label` (@string/app_name), AdMob meta-data ve strings.xml değerlerini günceller.
 /// 2. android/app/build.gradle içindeki `applicationId` ve `namespace` değerlerini günceller.
 /// 3. assets.icon_base64 ve splash_base64 verilerini Android mipmap-* ve iOS AppIcon varlıklarına dönüştürür.
 /// 4. signing.keystore_base64 verisinden `upload.keystore` ve `key.properties` dosyalarını üretir.
@@ -40,7 +40,7 @@ void applyAppConfig({
   }
 
   print('📄 Konfigürasyon dosyası okunuyor: ${configFile.path}');
-  final String content = configFile.readAsStringSync();
+  final String content = configFile.readAsStringSync(encoding: utf8);
   final Map<String, dynamic> config;
   try {
     config = json.decode(content) as Map<String, dynamic>;
@@ -53,11 +53,23 @@ void applyAppConfig({
   final assets = config['assets'] as Map<String, dynamic>? ?? {};
   final signing = config['signing'] as Map<String, dynamic>? ?? {};
   final appStore = config['app_store_connect'] as Map<String, dynamic>? ?? {};
+  final monetization = config['monetization'] as Map<String, dynamic>? ?? {};
 
   final String appName = appInfo['app_name']?.toString() ?? appInfo['name']?.toString() ?? 'Web2App';
   final String packageName = appInfo['package_name']?.toString() ?? appInfo['package']?.toString() ?? 'com.web2app.app';
   final String appVersion = appInfo['app_version']?.toString() ?? '1.0.0';
   final int buildNumber = (appInfo['build_number'] as num?)?.toInt() ?? 1;
+
+  final String rawAdmobAppId = (config['admob_app_id'] ??
+          monetization['admob_app_id_android'] ??
+          monetization['admob_app_id'] ??
+          appInfo['admob_app_id'])
+      ?.toString()
+      .trim() ??
+      '';
+  final String admobAppId = rawAdmobAppId.isNotEmpty
+      ? rawAdmobAppId
+      : 'ca-app-pub-3940256099942544~3347511713';
 
   final String iconBase64 = assets['icon_base64']?.toString() ?? assets['icon']?.toString() ?? '';
   final String splashBase64 = assets['splash_base64']?.toString() ?? assets['splash']?.toString() ?? '';
@@ -74,6 +86,7 @@ void applyAppConfig({
   print('📦 Uygulama Adı      : $appName');
   print('🆔 Paket Kimliği     : $packageName');
   print('🏷️  Sürüm              : v$appVersion+$buildNumber');
+  print('📢 AdMob App ID       : $admobAppId');
   print('🎨 İkon Base64       : ${iconBase64.isNotEmpty ? "Mevcut (${(iconBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Varsayılan)"}');
   print('🔑 Keystore          : ${keystoreBase64.isNotEmpty ? "Mevcut (${(keystoreBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Debug/Unsigned)"}');
   print('🍎 TestFlight p8     : ${appStoreP8Base64.isNotEmpty ? "Mevcut (Key: $appStoreKeyId)" : "Yok"}');
@@ -88,6 +101,7 @@ void applyAppConfig({
       androidRoot: androidRoot,
       appName: appName,
       packageName: packageName,
+      admobAppId: admobAppId,
       iconBase64: iconBase64,
       splashBase64: splashBase64,
       keystoreBase64: keystoreBase64,
@@ -134,6 +148,7 @@ void _applyAndroidConfig({
   required String androidRoot,
   required String appName,
   required String packageName,
+  required String admobAppId,
   required String iconBase64,
   required String splashBase64,
   required String keystoreBase64,
@@ -144,10 +159,10 @@ void _applyAndroidConfig({
   // 1. AndroidManifest.xml
   final manifestFile = File('$androidRoot/app/src/main/AndroidManifest.xml');
   if (manifestFile.existsSync()) {
-    var manifestContent = manifestFile.readAsStringSync();
+    var manifestContent = manifestFile.readAsStringSync(encoding: utf8);
     manifestContent = manifestContent.replaceAll(
       RegExp(r'android:label="[^"]*"'),
-      'android:label="$appName"',
+      'android:label="@string/app_name"',
     );
     if (manifestContent.contains('package="')) {
       manifestContent = manifestContent.replaceAll(
@@ -155,8 +170,27 @@ void _applyAndroidConfig({
         'package="$packageName"',
       );
     }
-    manifestFile.writeAsStringSync(manifestContent);
-    print('  ✓ AndroidManifest.xml güncellendi (android:label="$appName")');
+
+    final admobRegex = RegExp(
+      r'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*\/?>',
+      caseSensitive: false,
+      multiLine: true,
+      dotAll: true,
+    );
+    if (admobRegex.hasMatch(manifestContent)) {
+      manifestContent = manifestContent.replaceAll(
+        admobRegex,
+        '<meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>',
+      );
+    } else {
+      manifestContent = manifestContent.replaceFirst(
+        '</application>',
+        '    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>\n    </application>',
+      );
+    }
+
+    manifestFile.writeAsStringSync(manifestContent, encoding: utf8);
+    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", AdMob ID="$admobAppId")');
   } else {
     manifestFile.parent.createSync(recursive: true);
     manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -164,7 +198,7 @@ void _applyAndroidConfig({
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
-        android:label="$appName"
+        android:label="@string/app_name"
         android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -181,12 +215,15 @@ void _applyAndroidConfig({
             </intent-filter>
         </activity>
         <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="$admobAppId"/>
+        <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 </manifest>
-''');
-    print('  ✓ AndroidManifest.xml oluşturuldu');
+''', encoding: utf8);
+    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", AdMob ID="$admobAppId")');
   }
 
   // 2. strings.xml
@@ -196,7 +233,7 @@ void _applyAndroidConfig({
 <resources>
     <string name="app_name">$appName</string>
 </resources>
-''');
+''', encoding: utf8);
   print('  ✓ res/values/strings.xml güncellendi');
 
   final stylesFile = File('$androidRoot/app/src/main/res/values/styles.xml');
@@ -211,7 +248,7 @@ void _applyAndroidConfig({
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>
-''');
+''', encoding: utf8);
     print('  ✓ res/values/styles.xml oluşturuldu');
   }
 
@@ -227,7 +264,7 @@ void _applyAndroidConfig({
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 </resources>
-''');
+''', encoding: utf8);
     print('  ✓ res/values-night/styles.xml oluşturuldu');
   }
 
@@ -238,14 +275,14 @@ void _applyAndroidConfig({
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@android:color/white" />
 </layer-list>
-''');
+''', encoding: utf8);
     print('  ✓ res/drawable/launch_background.xml oluşturuldu');
   }
 
   // 3. android/app/build.gradle
   final appBuildGradle = File('$androidRoot/app/build.gradle');
   if (appBuildGradle.existsSync()) {
-    var content = appBuildGradle.readAsStringSync();
+    var content = appBuildGradle.readAsStringSync(encoding: utf8);
     content = content.replaceAll(
       RegExp(r'applicationId\s*=?\s*["\x27][^"\x27]+["\x27]'),
       'applicationId = "$packageName"',
@@ -254,7 +291,7 @@ void _applyAndroidConfig({
       RegExp(r'namespace\s*=?\s*["\x27][^"\x27]+["\x27]'),
       'namespace = "$packageName"',
     );
-    appBuildGradle.writeAsStringSync(content);
+    appBuildGradle.writeAsStringSync(content, encoding: utf8);
     print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName")');
   } else {
     appBuildGradle.parent.createSync(recursive: true);
@@ -311,7 +348,7 @@ android {
 flutter {
     source = "../.."
 }
-''');
+''', encoding: utf8);
     print('  ✓ android/app/build.gradle oluşturuldu');
   }
 
@@ -376,7 +413,7 @@ flutter {
 keyPassword=$keyPassword
 keyAlias=$keyAlias
 storeFile=../upload.keystore
-''');
+''', encoding: utf8);
       print('  ✓ upload.keystore ve key.properties başarıyla oluşturuldu ve bağlandı');
     } catch (e) {
       print('  ⚠️ Keystore Base64 çözülemedi: $e');
@@ -397,7 +434,7 @@ void _applyIosConfig({
   // 1. Info.plist
   final infoPlistFile = File('$iosRoot/Runner/Info.plist');
   if (infoPlistFile.existsSync()) {
-    var plistContent = infoPlistFile.readAsStringSync();
+    var plistContent = infoPlistFile.readAsStringSync(encoding: utf8);
     if (plistContent.contains('<key>CFBundleDisplayName</key>')) {
       plistContent = plistContent.replaceAll(
         RegExp(r'<key>CFBundleDisplayName<\/key>\s*<string>[^<]*<\/string>'),
@@ -417,7 +454,7 @@ void _applyIosConfig({
       );
     }
 
-    infoPlistFile.writeAsStringSync(plistContent);
+    infoPlistFile.writeAsStringSync(plistContent, encoding: utf8);
     print('  ✓ ios/Runner/Info.plist güncellendi (CFBundleDisplayName="$appName")');
   } else {
     infoPlistFile.parent.createSync(recursive: true);
@@ -459,19 +496,19 @@ void _applyIosConfig({
 	</array>
 </dict>
 </plist>
-''');
+''', encoding: utf8);
     print('  ✓ ios/Runner/Info.plist oluşturuldu');
   }
 
   // 2. project.pbxproj (PRODUCT_BUNDLE_IDENTIFIER)
   final pbxprojFile = File('$iosRoot/Runner.xcodeproj/project.pbxproj');
   if (pbxprojFile.existsSync()) {
-    var pbxContent = pbxprojFile.readAsStringSync();
+    var pbxContent = pbxprojFile.readAsStringSync(encoding: utf8);
     pbxContent = pbxContent.replaceAll(
       RegExp(r'PRODUCT_BUNDLE_IDENTIFIER\s*=\s*[^;]+;'),
       'PRODUCT_BUNDLE_IDENTIFIER = $packageName;',
     );
-    pbxprojFile.writeAsStringSync(pbxContent);
+    pbxprojFile.writeAsStringSync(pbxContent, encoding: utf8);
     print('  ✓ ios/Runner.xcodeproj/project.pbxproj güncellendi (PRODUCT_BUNDLE_IDENTIFIER=$packageName)');
   } else {
     pbxprojFile.parent.createSync(recursive: true);
@@ -499,7 +536,7 @@ void _applyIosConfig({
 	};
 	rootObject = 97C146E61CF9000F007C117D;
 }
-''');
+''', encoding: utf8);
     print('  ✓ ios/Runner.xcodeproj/project.pbxproj oluşturuldu');
   }
 
@@ -528,7 +565,7 @@ void _applyIosConfig({
     "version" : 1
   }
 }
-''');
+''', encoding: utf8);
       print('  ✓ iOS AppIcon.appiconset ikon varlıkları Base64 verisinden üretildi');
     } catch (e) {
       print('  ⚠️ iOS İkon Base64 çözülemedi: $e');
@@ -552,7 +589,7 @@ void _applyIosConfig({
       appFile.writeAsStringSync('''app_identifier("$packageName")
 apple_id("developer@web2app.local")
 itc_team_id("$appStoreIssuerId")
-''');
+''', encoding: utf8);
 
       final fastFile = File('${fastlaneDir.path}/Fastfile');
       fastFile.writeAsStringSync('''default_platform(:ios)
@@ -574,7 +611,7 @@ platform :ios do
     )
   end
 end
-''');
+''', encoding: utf8);
       print('  ✓ App Store Connect AuthKey (.p8), Appfile ve Fastfile TestFlight için yapılandırıldı');
     } catch (e) {
       print('  ⚠️ App Store Connect p8 Base64 çözülemedi: $e');
