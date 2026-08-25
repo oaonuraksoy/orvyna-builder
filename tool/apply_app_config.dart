@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math' as math;
+import 'package:image/image.dart' as img;
 
 /// Web2App Bulut & CI/CD Konfigürasyon Uygulayıcı (Build Preprocessor)
 ///
@@ -352,24 +354,76 @@ flutter {
     print('  ✓ android/app/build.gradle oluşturuldu');
   }
 
-  // 4. İkon Dosyaları (Base64 -> PNG)
+  // 4. İkon Dosyaları (Base64 -> PNG -> Center Crop 1:1 -> Mipmap & Adaptive)
   final resDir = Directory('$androidRoot/app/src/main/res');
   if (iconBase64.isNotEmpty) {
     try {
       final bytes = base64Decode(iconBase64.replaceAll(RegExp(r'\s+'), ''));
-      final mipmapDirs = [
-        'mipmap-mdpi',
-        'mipmap-hdpi',
-        'mipmap-xhdpi',
-        'mipmap-xxhdpi',
-        'mipmap-xxxhdpi',
-      ];
-      for (final dir in mipmapDirs) {
-        final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
-        iconFile.parent.createSync(recursive: true);
-        iconFile.writeAsBytesSync(bytes);
+      final decodedImage = img.decodeImage(bytes);
+      if (decodedImage != null) {
+        // Merkezden 1:1 kare kırp (Center Crop)
+        final minSide = math.min(decodedImage.width, decodedImage.height);
+        final cropX = (decodedImage.width - minSide) ~/ 2;
+        final cropY = (decodedImage.height - minSide) ~/ 2;
+        final cropped = img.copyCrop(
+          decodedImage,
+          x: cropX,
+          y: cropY,
+          width: minSide,
+          height: minSide,
+        );
+
+        // Standart Launcher İkonları: 48, 72, 96, 144, 192 px
+        const launcherSizes = {
+          'mipmap-mdpi': 48,
+          'mipmap-hdpi': 72,
+          'mipmap-xhdpi': 96,
+          'mipmap-xxhdpi': 144,
+          'mipmap-xxxhdpi': 192,
+        };
+
+        // Adaptive Foreground İkonları: 108, 162, 216, 324, 432 px
+        const foregroundSizes = {
+          'mipmap-mdpi': 108,
+          'mipmap-hdpi': 162,
+          'mipmap-xhdpi': 216,
+          'mipmap-xxhdpi': 324,
+          'mipmap-xxxhdpi': 432,
+        };
+
+        for (final entry in launcherSizes.entries) {
+          final dir = entry.key;
+          final size = entry.value;
+          final resized = img.copyResize(cropped, width: size, height: size);
+          final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
+          iconFile.parent.createSync(recursive: true);
+          iconFile.writeAsBytesSync(img.encodePng(resized));
+        }
+
+        for (final entry in foregroundSizes.entries) {
+          final dir = entry.key;
+          final size = entry.value;
+          final resized = img.copyResize(cropped, width: size, height: size);
+          final fgFile = File('${resDir.path}/$dir/ic_launcher_foreground.png');
+          fgFile.parent.createSync(recursive: true);
+          fgFile.writeAsBytesSync(img.encodePng(resized));
+        }
+
+        // Android 8.0+ (API 26+) Adaptive Icon XML
+        final anyDpiDir = Directory('${resDir.path}/mipmap-anydpi-v26');
+        if (!anyDpiDir.existsSync()) anyDpiDir.createSync(recursive: true);
+        final adaptiveXml = File('${anyDpiDir.path}/ic_launcher.xml');
+        adaptiveXml.writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/white" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
+''', encoding: utf8);
+
+        print('  ✓ Android mipmap launcher ve adaptive foreground ikonları (5 çözünürlük) 1:1 Center Crop ile üretildi');
+      } else {
+        _writeRawIconsFallback(resDir, bytes);
       }
-      print('  ✓ Android mipmap ikonları Base64 verisinden üretildi (5 çözünürlük)');
     } catch (e) {
       print('  ⚠️ İkon Base64 çözülemedi: $e');
       _ensureDefaultAndroidIcons(resDir);
@@ -548,7 +602,23 @@ void _applyIosConfig({
       iconsetDir.createSync(recursive: true);
 
       final icon1024 = File('${iconsetDir.path}/Icon-App-1024x1024@1x.png');
-      icon1024.writeAsBytesSync(bytes);
+      final decodedImage = img.decodeImage(bytes);
+      if (decodedImage != null) {
+        final minSide = math.min(decodedImage.width, decodedImage.height);
+        final cropX = (decodedImage.width - minSide) ~/ 2;
+        final cropY = (decodedImage.height - minSide) ~/ 2;
+        final cropped = img.copyCrop(
+          decodedImage,
+          x: cropX,
+          y: cropY,
+          width: minSide,
+          height: minSide,
+        );
+        final resized = img.copyResize(cropped, width: 1024, height: 1024);
+        icon1024.writeAsBytesSync(img.encodePng(resized));
+      } else {
+        icon1024.writeAsBytesSync(bytes);
+      }
 
       final contentsJsonFile = File('${iconsetDir.path}/Contents.json');
       contentsJsonFile.writeAsStringSync('''{
@@ -619,11 +689,15 @@ end
   }
 }
 
-/// Android mipmap ikonlarının varlığını garanti eder, yoksa varsayılan 1x1 PNG yazar
+/// Android mipmap ikonlarının ve adaptive icon XML'inin varlığını garanti eder, yoksa varsayılan 1x1 PNG yazar
 void _ensureDefaultAndroidIcons(Directory resDir) {
   const defaultPngBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
   final defaultBytes = base64Decode(defaultPngBase64);
+  _writeRawIconsFallback(resDir, defaultBytes);
+}
+
+void _writeRawIconsFallback(Directory resDir, List<int> bytes) {
   final mipmapDirs = [
     'mipmap-mdpi',
     'mipmap-hdpi',
@@ -635,8 +709,23 @@ void _ensureDefaultAndroidIcons(Directory resDir) {
     final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
     if (!iconFile.existsSync()) {
       iconFile.parent.createSync(recursive: true);
-      iconFile.writeAsBytesSync(defaultBytes);
+      iconFile.writeAsBytesSync(bytes);
+    }
+    final fgFile = File('${resDir.path}/$dir/ic_launcher_foreground.png');
+    if (!fgFile.existsSync()) {
+      fgFile.parent.createSync(recursive: true);
+      fgFile.writeAsBytesSync(bytes);
     }
   }
+  final anyDpiDir = Directory('${resDir.path}/mipmap-anydpi-v26');
+  final adaptiveXml = File('${anyDpiDir.path}/ic_launcher.xml');
+  if (!adaptiveXml.existsSync()) {
+    anyDpiDir.createSync(recursive: true);
+    adaptiveXml.writeAsStringSync('''<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/white" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>
+''', encoding: utf8);
+  }
 }
-

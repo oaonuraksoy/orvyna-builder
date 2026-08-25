@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import '../tool/apply_app_config.dart';
 
 void main() {
@@ -120,10 +121,18 @@ void main() {
       expect(gradleContent, contains('applicationId = "com.mysuper.app"'));
       expect(gradleContent, contains('namespace = "com.mysuper.app"'));
 
-      // 3. Android Mipmap Icons Verification
+      // 3. Android Mipmap Icons & Adaptive Icon Verification
       final mipmapHdpi = File('${tempDir.path}/android/app/src/main/res/mipmap-hdpi/ic_launcher.png');
       expect(mipmapHdpi.existsSync(), isTrue);
       expect(mipmapHdpi.lengthSync(), greaterThan(0));
+
+      final mipmapFgHdpi = File('${tempDir.path}/android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png');
+      expect(mipmapFgHdpi.existsSync(), isTrue);
+      expect(mipmapFgHdpi.lengthSync(), greaterThan(0));
+
+      final adaptiveXml = File('${tempDir.path}/android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml');
+      expect(adaptiveXml.existsSync(), isTrue);
+      expect(adaptiveXml.readAsStringSync(encoding: utf8), contains('@mipmap/ic_launcher_foreground'));
 
       // Android Styles & Themes Verification
       final stylesXml = File('${tempDir.path}/android/app/src/main/res/values/styles.xml');
@@ -243,6 +252,75 @@ void main() {
       final manifestContent = manifest.readAsStringSync(encoding: utf8);
       expect(manifestContent, contains('android:label="@string/app_name"'));
       expect(manifestContent, contains(customAdmobId));
+    });
+
+    test('applyAppConfig center crops rectangular icons and generates all mipmap & adaptive resolutions', () {
+      // Create a 800x400 rectangular image (portrait or landscape)
+      final rectImage = img.Image(width: 800, height: 400);
+      img.fill(rectImage, color: img.ColorRgb8(0, 128, 255));
+      final rawPng = img.encodePng(rectImage);
+      final rawBase64 = base64Encode(rawPng);
+
+      final rectConfigFile = File('${tempDir.path}/app_config_rect.json');
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': 'Crop Test App',
+          'package_name': 'com.crop.app',
+        },
+        'assets': {
+          'icon_base64': rawBase64,
+        },
+      };
+      rectConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
+
+      applyAppConfig(
+        configPath: rectConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final expectedLauncherSizes = {
+        'mipmap-mdpi': 48,
+        'mipmap-hdpi': 72,
+        'mipmap-xhdpi': 96,
+        'mipmap-xxhdpi': 144,
+        'mipmap-xxxhdpi': 192,
+      };
+
+      final expectedFgSizes = {
+        'mipmap-mdpi': 108,
+        'mipmap-hdpi': 162,
+        'mipmap-xhdpi': 216,
+        'mipmap-xxhdpi': 324,
+        'mipmap-xxxhdpi': 432,
+      };
+
+      for (final entry in expectedLauncherSizes.entries) {
+        final iconFile = File('${tempDir.path}/android/app/src/main/res/${entry.key}/ic_launcher.png');
+        expect(iconFile.existsSync(), isTrue);
+        final decoded = img.decodeImage(iconFile.readAsBytesSync());
+        expect(decoded, isNotNull);
+        expect(decoded!.width, equals(entry.value));
+        expect(decoded.height, equals(entry.value));
+      }
+
+      for (final entry in expectedFgSizes.entries) {
+        final fgFile = File('${tempDir.path}/android/app/src/main/res/${entry.key}/ic_launcher_foreground.png');
+        expect(fgFile.existsSync(), isTrue);
+        final decoded = img.decodeImage(fgFile.readAsBytesSync());
+        expect(decoded, isNotNull);
+        expect(decoded!.width, equals(entry.value));
+        expect(decoded.height, equals(entry.value));
+      }
+
+      // Verify iOS AppIcon is square 1024x1024
+      final iosIcon = File('${tempDir.path}/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png');
+      expect(iosIcon.existsSync(), isTrue);
+      final decodedIos = img.decodeImage(iosIcon.readAsBytesSync());
+      expect(decodedIos, isNotNull);
+      expect(decodedIos!.width, equals(1024));
+      expect(decodedIos.height, equals(1024));
     });
   });
 }
