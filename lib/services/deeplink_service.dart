@@ -96,6 +96,20 @@ class DeepLinkService {
     'birlesikodeme.com',
   ];
 
+  static const List<String> _securityVerificationHosts = [
+    'challenges.cloudflare.com',
+    'hcaptcha.com',
+    'geetest.com',
+    'recaptcha.net',
+    'arkoselabs.com',
+    'funcaptcha.com',
+    'cf-assets.hcaptcha.com',
+    'newassets.hcaptcha.com',
+    'static.geetest.com',
+    'api.geetest.com',
+    'cstaticdun.126.net',
+  ];
+
   DeepLinkService({required this.config});
 
   /// Gelen URL isteğini analiz eder ve gerekirse native uygulamaya veya harici tarayıcıya yönlendirir.
@@ -129,9 +143,14 @@ class DeepLinkService {
       return false; // In-App WebView içinde açılmasına izin ver
     }
 
+    // 4. CAPTCHA & Güvenlik Doğrulama Geçitleri (Google reCAPTCHA, Cloudflare Turnstile, hCaptcha, Geetest vb.)
+    if (isSecurityVerification(uri)) {
+      return false; // In-App WebView içinde kesintisiz yüklenmesine izin ver
+    }
+
     final isInternal = isInternalDomain(uri, config.navigation.internalDomains, config.appInfo.webUrl);
 
-    // 4. Strict Domain Lock (blockExternalUrls == true)
+    // 5. Strict Domain Lock (blockExternalUrls == true)
     // Eğer blockExternalUrls aktif ise ve URL isInternalDomain değilse;
     // hiçbir harici protokolü çalıştırma veya harici tarayıcıyı açma, navigasyonu doğrudan iptal et (true dön).
     if (config.navigation.blockExternalUrls) {
@@ -143,13 +162,13 @@ class DeepLinkService {
       }
     }
 
-    // 5. Diğer Özel / Native Şemalar (intent, market, itms-apps vb.) veya http dışı protokoller
+    // 6. Diğer Özel / Native Şemalar (intent, market, itms-apps vb.) veya http dışı protokoller
     if (isNativeScheme(scheme) || !urlString.startsWith('http')) {
       await _launchExternalProtocol(urlString);
       return true; // WebView içi navigasyonu engelle
     }
 
-    // 6. Harici URL Desenleri Kontrolü (externalUrlPatterns - örn: *.example-partner.com/*)
+    // 7. Harici URL Desenleri Kontrolü (externalUrlPatterns - örn: *.example-partner.com/*)
     final externalPatterns = config.navigation.externalUrlPatterns;
     if (externalPatterns.isNotEmpty && matchesAnyPattern(urlString, externalPatterns)) {
       if (onConfirmExternalNavigation != null) {
@@ -163,12 +182,12 @@ class DeepLinkService {
       return true; // WebView içi navigasyonu engelle
     }
 
-    // 7. İzin Verilen İç Domainler Kontrolü (internalDomains & ana site URL)
+    // 8. İzin Verilen İç Domainler Kontrolü (internalDomains & ana site URL)
     if (isInternal) {
       return false; // WebView içinde yüklemeye izin ver
     }
 
-    // 8. Genel Harici Web Bağlantıları Kontrolü (openExternalInBrowser / openExternalUrlsInBrowser)
+    // 9. Genel Harici Web Bağlantıları Kontrolü (openExternalInBrowser / openExternalUrlsInBrowser)
     final openExternal = config.navigation.openExternalInBrowser ||
         config.webviewSettings.openExternalUrlsInBrowser;
 
@@ -188,6 +207,31 @@ class DeepLinkService {
     }
 
     return false; // Standart WebView yüklemesine devam et
+  }
+
+  /// Verilen URI'nin bir CAPTCHA veya güvenlik doğrulama geçidi (Google reCAPTCHA, Cloudflare Turnstile, hCaptcha, Geetest vb.) olup olmadığını kontrol eder
+  static bool isSecurityVerification(Uri uri) {
+    final host = uri.host.toLowerCase();
+    if (host.isEmpty) return false;
+
+    // 1. Google reCAPTCHA & gstatic doğrulama kaynakları (google.com/recaptcha, gstatic.com/recaptcha, recaptcha.net)
+    if (_isSameOrSubdomain(host, 'recaptcha.net')) return true;
+    if (_isSameOrSubdomain(host, 'google.com') || _isSameOrSubdomain(host, 'gstatic.com')) {
+      final path = uri.path.toLowerCase();
+      final url = uri.toString().toLowerCase();
+      if (path.contains('recaptcha') || url.contains('recaptcha')) {
+        return true;
+      }
+    }
+
+    // 2. Standart bot koruma & CAPTCHA domainleri (Cloudflare Turnstile, hCaptcha, Geetest vb.)
+    for (final secHost in _securityVerificationHosts) {
+      if (_isSameOrSubdomain(host, secHost)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /// Verilen URI'nin bir banka veya ödeme geçidi (iyzico, PayTR, Stripe, bankalar vb.) olup olmadığını kontrol eder
@@ -285,10 +329,15 @@ class DeepLinkService {
     return false;
   }
 
-  /// Verilen URI'nin iç domain listesinde veya ana web sitesi alan adında olup olmadığını kontrol eder
+  /// Verilen URI'nin iç domain listesinde, ana web sitesinde veya güvenlik doğrulama geçitlerinde olup olmadığını kontrol eder
   static bool isInternalDomain(Uri uri, List<String> internalDomains, String mainWebUrl) {
     final host = uri.host.toLowerCase();
     if (host.isEmpty) return true;
+
+    // 0. CAPTCHA ve Güvenlik Doğrulama Geçitleri Kontrolü (reCAPTCHA, Turnstile, hCaptcha vb.)
+    if (isSecurityVerification(uri)) {
+      return true;
+    }
 
     // 1. Ana web sitesi alan adı kontrolü
     final baseUri = Uri.tryParse(mainWebUrl);

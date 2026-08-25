@@ -313,7 +313,12 @@ class CustomWebViewState extends State<CustomWebView> {
             opacity: _isContentReady ? 0.0 : 1.0,
             duration: const Duration(milliseconds: 300),
             curve: Curves.easeInOut,
-            child: ShimmerLoadingView(theme: widget.config.theme),
+            child: ShimmerLoadingView(
+              theme: widget.config.theme,
+              appName: widget.config.appInfo.appName,
+              splashBase64: widget.config.assets.splashBase64,
+              iconBase64: widget.config.assets.iconBase64,
+            ),
           ),
         ),
 

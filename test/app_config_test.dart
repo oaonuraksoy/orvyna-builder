@@ -582,6 +582,30 @@ void main() {
       );
       final socialHandled = await deepLinkService.handleNavigationRequest(socialNav);
       expect(socialHandled, isTrue);
+
+      // 5. CAPTCHA & Security Verification Requests -> MUST NOT be blocked even with Strict Domain Lock
+      final captchaUrls = [
+        'https://www.google.com/recaptcha/api.js',
+        'https://google.com/recaptcha/enterprise/anchor',
+        'https://www.gstatic.com/recaptcha/releases/v1/recaptcha__tr.js',
+        'https://challenges.cloudflare.com/turnstile/v0/api.js',
+        'https://hcaptcha.com/1/api.js',
+        'https://static.geetest.com/v4/gt4.js',
+        'https://recaptcha.net/recaptcha/api.js',
+      ];
+
+      for (final captchaUrl in captchaUrls) {
+        final uri = Uri.parse(captchaUrl);
+        expect(DeepLinkService.isSecurityVerification(uri), isTrue, reason: 'isSecurityVerification failed for $captchaUrl');
+        expect(DeepLinkService.isInternalDomain(uri, ['mysite.com'], 'https://mysite.com'), isTrue, reason: 'isInternalDomain failed for $captchaUrl');
+
+        final captchaNav = NavigationAction(
+          request: URLRequest(url: WebUri(captchaUrl)),
+          isForMainFrame: false,
+        );
+        final handled = await deepLinkService.handleNavigationRequest(captchaNav);
+        expect(handled, isFalse, reason: 'CAPTCHA was blocked under Strict Domain Lock: $captchaUrl');
+      }
     });
 
     test('AppConfig 4 Offline Modes, Custom Pages, and System Settings Serialization', () {
