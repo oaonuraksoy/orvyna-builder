@@ -64,11 +64,11 @@ jobs:
         run: |
           echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
 
-      - name: Yapılandırma ve Varlıkları Uygula (Paket Adı, İkon, Keystore)
-        run: dart tool/apply_app_config.dart --platform=android
-
       - name: Install Dependencies
         run: flutter pub get
+
+      - name: Yapılandırma ve Varlıkları Uygula (Paket Adı, İkon, Keystore)
+        run: dart tool/apply_app_config.dart --platform=android
 
       - name: Build Android APK
         if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
