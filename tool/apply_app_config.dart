@@ -81,8 +81,10 @@ void applyAppConfig({
 
   final String keystoreBase64 = signing['keystore_base64']?.toString() ?? '';
   final String keystorePassword = signing['keystore_password']?.toString() ?? '';
-  final String keyAlias = signing['key_alias']?.toString() ?? 'upload';
-  final String keyPassword = signing['key_password']?.toString() ?? keystorePassword;
+  final String rawKeyAlias = signing['key_alias']?.toString() ?? '';
+  final String keyAlias = rawKeyAlias.trim().isNotEmpty ? rawKeyAlias.trim() : 'upload';
+  final String rawKeyPassword = signing['key_password']?.toString() ?? '';
+  final String keyPassword = rawKeyPassword.trim().isNotEmpty ? rawKeyPassword.trim() : keystorePassword;
 
   final String appStoreIssuerId = appStore['issuer_id']?.toString() ?? '';
   final String appStoreKeyId = appStore['key_id']?.toString() ?? '';
@@ -499,8 +501,13 @@ flutter {
   }
 
   // 6. Keystore & İmzalama (Signing Key)
-  if (keystoreBase64.isNotEmpty) {
+  final keyPropsFile = File('$androidRoot/key.properties');
+  if (keystoreBase64.trim().isNotEmpty && keystorePassword.trim().isNotEmpty) {
     try {
+      final effectiveAlias = keyAlias.trim().isNotEmpty ? keyAlias.trim() : 'upload';
+      final effectiveKeyPass = keyPassword.trim().isNotEmpty ? keyPassword.trim() : keystorePassword.trim();
+      final effectiveStorePass = keystorePassword.trim();
+
       final keystoreBytes = base64Decode(keystoreBase64.replaceAll(RegExp(r'\s+'), ''));
       final keystoreFile = File('$androidRoot/upload.keystore');
       keystoreFile.parent.createSync(recursive: true);
@@ -510,15 +517,25 @@ flutter {
       appKeystoreFile.parent.createSync(recursive: true);
       appKeystoreFile.writeAsBytesSync(keystoreBytes);
 
-      final keyPropsFile = File('$androidRoot/key.properties');
-      keyPropsFile.writeAsStringSync('''storePassword=$keystorePassword
-keyPassword=$keyPassword
-keyAlias=$keyAlias
+      keyPropsFile.writeAsStringSync('''storePassword=$effectiveStorePass
+keyPassword=$effectiveKeyPass
+keyAlias=$effectiveAlias
 storeFile=../upload.keystore
 ''', encoding: utf8);
-      print('  ✓ upload.keystore ve key.properties başarıyla oluşturuldu ve bağlandı');
+      print('  ✓ upload.keystore ve key.properties başarıyla oluşturuldu ve bağlandı (Alias: $effectiveAlias)');
     } catch (e) {
       print('  ⚠️ Keystore Base64 çözülemedi: $e');
+      if (keyPropsFile.existsSync()) {
+        keyPropsFile.deleteSync();
+      }
+    }
+  } else {
+    // Keystore veya şifre girilmediyse key.properties silinmeli ki Gradle otomatik olarak debug signing kullansın ve APK derlemesi ÇÖKMESİN.
+    if (keyPropsFile.existsSync()) {
+      keyPropsFile.deleteSync();
+      print('  ℹ️ Keystore veya şifre girilmediği için key.properties kaldırıldı (Debug signing kullanılacak)');
+    } else {
+      print('  ℹ️ Keystore veya şifre belirtilmedi (Debug signing kullanılacak)');
     }
   }
 }

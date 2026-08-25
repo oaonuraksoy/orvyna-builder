@@ -1151,21 +1151,26 @@ class SigningConfig {
   const SigningConfig({
     this.keystoreBase64 = '',
     this.keystorePassword = '',
-    this.keyAlias = '',
+    this.keyAlias = 'upload',
     this.keyPassword = '',
   });
 
   const SigningConfig.defaultConfig()
       : keystoreBase64 = '',
         keystorePassword = '',
-        keyAlias = '',
+        keyAlias = 'upload',
         keyPassword = '';
 
+  String get effectiveAlias => keyAlias.trim().isNotEmpty ? keyAlias.trim() : 'upload';
+  String get effectiveKeyPassword =>
+      keyPassword.trim().isNotEmpty ? keyPassword.trim() : keystorePassword.trim();
+
   factory SigningConfig.fromJson(Map<String, dynamic> json) {
+    final rawAlias = json['key_alias'] as String? ?? '';
     return SigningConfig(
       keystoreBase64: json['keystore_base64'] as String? ?? '',
       keystorePassword: json['keystore_password'] as String? ?? '',
-      keyAlias: json['key_alias'] as String? ?? '',
+      keyAlias: rawAlias.trim().isNotEmpty ? rawAlias.trim() : 'upload',
       keyPassword: json['key_password'] as String? ?? '',
     );
   }
@@ -1173,7 +1178,7 @@ class SigningConfig {
   Map<String, dynamic> toJson() => {
     'keystore_base64': keystoreBase64,
     'keystore_password': keystorePassword,
-    'key_alias': keyAlias,
+    'key_alias': effectiveAlias,
     'key_password': keyPassword,
   };
 

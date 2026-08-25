@@ -322,5 +322,67 @@ void main() {
       expect(decodedIos!.width, equals(1024));
       expect(decodedIos.height, equals(1024));
     });
+
+    test('applyAppConfig defaults keyAlias to upload and keyPassword to keystorePassword when empty', () {
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': 'Fallback Signing App',
+          'package_name': 'com.fallback.app',
+        },
+        'signing': {
+          'keystore_base64': 'RFVNTVlfS0VZU1RPUkVfQkFTRTY0',
+          'keystore_password': 'storePasswordOnly',
+          'key_alias': '',
+          'key_password': '',
+        },
+      };
+      final fallbackConfigFile = File('${tempDir.path}/app_config_fallback.json');
+      fallbackConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
+
+      applyAppConfig(
+        configPath: fallbackConfigFile.path,
+        platform: 'android',
+        baseDir: tempDir,
+      );
+
+      final keyProps = File('${tempDir.path}/android/key.properties');
+      expect(keyProps.existsSync(), isTrue);
+      final content = keyProps.readAsStringSync(encoding: utf8);
+      expect(content, contains('keyAlias=upload'));
+      expect(content, contains('storePassword=storePasswordOnly'));
+      expect(content, contains('keyPassword=storePasswordOnly'));
+    });
+
+    test('applyAppConfig does not create key.properties and deletes existing one if keystorePassword is empty', () {
+      final existingKeyProps = File('${tempDir.path}/android/key.properties');
+      existingKeyProps.writeAsStringSync('old=props', encoding: utf8);
+      expect(existingKeyProps.existsSync(), isTrue);
+
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {
+          'app_name': 'No Pass Signing App',
+          'package_name': 'com.nopass.app',
+        },
+        'signing': {
+          'keystore_base64': 'RFVNTVlfS0VZU1RPUkVfQkFTRTY0',
+          'keystore_password': '',
+          'key_alias': 'myAlias',
+          'key_password': '',
+        },
+      };
+      final noPassConfigFile = File('${tempDir.path}/app_config_no_pass.json');
+      noPassConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
+
+      applyAppConfig(
+        configPath: noPassConfigFile.path,
+        platform: 'android',
+        baseDir: tempDir,
+      );
+
+      // key.properties must not exist so Gradle falls back to debug signing without crashing
+      expect(existingKeyProps.existsSync(), isFalse);
+    });
   });
 }
