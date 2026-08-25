@@ -173,11 +173,12 @@ class CustomWebViewState extends State<CustomWebView> {
               mediaPlaybackRequiresUserGesture: false,
               allowsInlineMediaPlayback: true,
               javaScriptEnabled: widget.config.webviewSettings.enableJavascript,
+              javaScriptCanOpenWindowsAutomatically: true,
               domStorageEnabled: widget.config.webviewSettings.enableDomStorage,
               geolocationEnabled: widget.config.webviewSettings.enableGeolocation,
               clearCache: widget.config.webviewSettings.clearCacheOnLaunch,
               userAgent: effectiveUserAgent,
-              supportMultipleWindows: false,
+              supportMultipleWindows: true,
               transparentBackground: true,
               disallowOverScroll: widget.config.webviewSettings.disallowOverScroll,
               supportZoom: widget.config.webviewSettings.supportZoom,
@@ -194,13 +195,27 @@ class CustomWebViewState extends State<CustomWebView> {
               webViewController = controller;
               _setupJavaScriptHandlers(controller);
             },
+            onCreateWindow: (controller, createWindowAction) async {
+              // POS / 3D Secure veya target="_blank" pencerelerini aynı webview içine yönlendir
+              final request = createWindowAction.request;
+              if (request.url != null) {
+                await controller.loadUrl(urlRequest: request);
+                return true;
+              }
+              return false;
+            },
             shouldOverrideUrlLoading: (controller, navigationAction) async {
               final uri = navigationAction.request.url;
               if (uri != null && uri.scheme == 'custom') {
                 widget.onCustomPageRequested?.call(uri.toString());
                 return NavigationActionPolicy.CANCEL;
               }
-              final handled = await widget.deepLinkService.handleNavigationRequest(navigationAction);
+              final handled = await widget.deepLinkService.handleNavigationRequest(
+                navigationAction,
+                onConfirmExternalNavigation: (externalUri) async {
+                  return await _showExternalLinkConfirmationDialog(externalUri);
+                },
+              );
               if (handled) {
                 return NavigationActionPolicy.CANCEL;
               }
@@ -319,6 +334,125 @@ class CustomWebViewState extends State<CustomWebView> {
           ),
       ],
     );
+  }
+
+  /// Güvenli harici bağlantı onay modalı ("Uygulamadan Çıkılıyor")
+  Future<bool> _showExternalLinkConfirmationDialog(Uri uri) async {
+    if (!mounted) return false;
+
+    final host = uri.host.isNotEmpty ? uri.host : uri.toString();
+    final theme = widget.config.theme;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF0F172A),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16.0),
+            side: const BorderSide(color: Color(0xFF1E293B), width: 1.0),
+          ),
+          titlePadding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 8.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+          actionsPadding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 16.0),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF38BDF8).withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10.0),
+                ),
+                child: const Icon(
+                  Icons.open_in_new_rounded,
+                  color: Color(0xFF38BDF8),
+                  size: 22.0,
+                ),
+              ),
+              const SizedBox(width: 12.0),
+              const Expanded(
+                child: Text(
+                  'Uygulamadan Çıkılıyor',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Harici bir web sitesine yönlendiriliyorsunuz. Güvenliğiniz için bu bağlantı harici tarayıcınızda açılacaktır.',
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 13.5,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14.0),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E293B),
+                  borderRadius: BorderRadius.circular(8.0),
+                  border: Border.all(color: const Color(0xFF334155)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.link_rounded, size: 16.0, color: Color(0xFF38BDF8)),
+                    const SizedBox(width: 8.0),
+                    Expanded(
+                      child: Text(
+                        host,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFFF1F5F9),
+                          fontSize: 13.0,
+                          fontWeight: FontWeight.w600,
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text(
+                'İptal',
+                style: TextStyle(color: Color(0xFF94A3B8), fontWeight: FontWeight.w600),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              ),
+              child: const Text(
+                'Tarayıcıda Aç',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    return confirmed ?? false;
   }
 
   /// JS Köprüsü ve Native İletişim Kanalları (Web2App JS API)

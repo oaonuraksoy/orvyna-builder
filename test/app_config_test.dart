@@ -239,6 +239,214 @@ void main() {
       expect(jsonOut['webview_settings']['force_mobile_viewport'], isTrue);
     });
 
+    test('DeepLinkService Payment & Banking Gateways Detection (isPaymentOrBankingGateway)', () {
+      final gateways = [
+        'https://iyzipay.com/checkout',
+        'https://sandbox-api.iyzico.com/pay',
+        'https://paytr.com/odeme/guvenli',
+        'https://pos.param.com.tr/3dsecure',
+        'https://bkm.com.tr',
+        'https://bkmexpress.com.tr/login',
+        'https://checkout.stripe.com/pay/cs_live',
+        'https://www.paypal.com/cgi-bin/webscr',
+        'https://sube.garantibbva.com.tr/islem',
+        'https://garanti.com.tr',
+        'https://3dsec.isbank.com.tr/acs',
+        'https://pos.yapikredi.com.tr',
+        'https://direct.akbank.com/pos',
+        'https://sube.ziraatbank.com.tr',
+        'https://vakifbank.com.tr',
+        'https://halkbank.com.tr',
+        'https://qnbfinansbank.com',
+        'https://qnb.com.tr',
+        'https://teb.com.tr',
+        'https://denizbank.com',
+        'https://kuveytturk.com.tr',
+        'https://enpara.com',
+        'https://papara.com/checkout',
+        'https://mastercard.com',
+        'https://visa.com',
+        'https://troyodeme.com',
+        'https://sipay.com.tr',
+        'https://ininal.com',
+        'https://paycell.com.tr',
+      ];
+
+      for (final url in gateways) {
+        final uri = Uri.parse(url);
+        expect(DeepLinkService.isPaymentOrBankingGateway(uri), isTrue, reason: 'Failed for $url');
+      }
+
+      // Non-banking URLs should return false
+      expect(DeepLinkService.isPaymentOrBankingGateway(Uri.parse('https://random-news-site.com')), isFalse);
+      expect(DeepLinkService.isPaymentOrBankingGateway(Uri.parse('https://google.com/search')), isFalse);
+      expect(DeepLinkService.isPaymentOrBankingGateway(Uri.parse('https://github.com')), isFalse);
+    });
+
+    test('DeepLinkService Native Media, Social & Messaging Apps Detection (isNativeMediaOrMessagingApp)', () {
+      final nativeUrls = [
+        'https://wa.me/905551234567',
+        'https://api.whatsapp.com/send?phone=905551234567',
+        'whatsapp://send?phone=905551234567',
+        'https://instagram.com/myaccount',
+        'https://www.instagram.com/explore',
+        'instagram://user?username=myaccount',
+        'https://twitter.com/flutterdev',
+        'https://x.com/flutterdev',
+        'twitter://user?screen_name=flutterdev',
+        'x://user?screen_name=flutterdev',
+        'https://linkedin.com/in/john-doe',
+        'https://www.linkedin.com/company/google',
+        'linkedin://profile/1234',
+        'https://youtube.com/watch?v=dQw4w9WgXcQ',
+        'https://youtu.be/dQw4w9WgXcQ',
+        'https://music.youtube.com/watch?v=123',
+        'vnd.youtube:dQw4w9WgXcQ',
+        'https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT',
+        'https://spotify.com/user',
+        'spotify:track:4cOdK2wGLETKBW3PvgPWqT',
+        'https://maps.google.com/?q=41.0082,28.9784',
+        'https://maps.apple.com/?ll=41.0082,28.9784',
+        'geo:41.0082,28.9784',
+        'maps:41.0082,28.9784',
+        'tel:+905551234567',
+        'mailto:info@example.com',
+        'sms:+905551234567',
+      ];
+
+      for (final url in nativeUrls) {
+        final uri = Uri.parse(url);
+        expect(DeepLinkService.isNativeMediaOrMessagingApp(uri), isTrue, reason: 'Failed for $url');
+      }
+
+      // Normal web pages should return false
+      expect(DeepLinkService.isNativeMediaOrMessagingApp(Uri.parse('https://example.com/blog')), isFalse);
+      expect(DeepLinkService.isNativeMediaOrMessagingApp(Uri.parse('https://flutter.dev')), isFalse);
+    });
+
+    test('DeepLinkService navigation handling allows payment gateways inside WebView and invokes confirmation for external', () async {
+      final config = AppConfig(
+        version: '1.0.0',
+        appInfo: const AppInfoConfig(
+          appName: 'Shop App',
+          packageName: 'com.shop.app',
+          webUrl: 'https://shop.com',
+          userAgent: '',
+          appVersion: '1.0.0',
+          buildNumber: 1,
+        ),
+        theme: const ThemeConfig(
+          primaryColorHex: '#2563EB',
+          accentColorHex: '#3B82F6',
+          backgroundColorHex: '#FFFFFF',
+          statusBarColorHex: '#1D4ED8',
+          statusBarDarkIcons: false,
+          splashBackgroundColorHex: '#2563EB',
+          themeTemplate: 'minimalist',
+        ),
+        navigation: const NavigationConfig(
+          enabled: true,
+          style: 'bottomNavBar',
+          items: [],
+          internalDomains: ['shop.com'],
+          blockExternalUrls: false,
+          openExternalInBrowser: true,
+        ),
+        webviewSettings: const WebViewSettingsConfig(
+          pullToRefresh: false,
+          showProgressBar: false,
+          progressBarColorHex: '#3B82F6',
+          enableJavascript: true,
+          enableDomStorage: true,
+          enableGeolocation: false,
+          enableCameraMicrophone: false,
+          clearCacheOnLaunch: false,
+          openExternalUrlsInBrowser: true,
+          customCss: '',
+          customJavascript: '',
+        ),
+        adblockSettings: const AdblockSettingsConfig(
+          enabled: false,
+          blockKnownAdHosts: false,
+          blockedSelectors: [],
+          blockedUrlPatterns: [],
+        ),
+        monetization: const MonetizationConfig(
+          admobEnabled: false,
+          bannerEnabled: false,
+          bannerIdAndroid: '',
+          bannerIdIos: '',
+          interstitialEnabled: false,
+          interstitialIdAndroid: '',
+          interstitialIdIos: '',
+          interstitialPageInterval: 5,
+          interstitialTimeIntervalSeconds: 120,
+          appOpenEnabled: false,
+          appOpenIdAndroid: '',
+          appOpenIdIos: '',
+        ),
+        notifications: const NotificationsConfig(
+          onesignalEnabled: false,
+          onesignalAppId: '',
+          promptPermissionOnLaunch: false,
+        ),
+        permissions: const PermissionsConfig(
+          camera: false,
+          microphone: false,
+          location: false,
+          storage: false,
+          notifications: false,
+        ),
+        offlineSettings: const OfflineSettingsConfig(
+          offlineTitle: 'Offline',
+          offlineMessage: 'No internet',
+          retryButtonText: 'Retry',
+        ),
+      );
+
+      final deepLinkService = DeepLinkService(config: config);
+
+      // 1. Payment gateway (iyzico / 3D Secure) -> MUST return false (ALLOW in WebView)
+      final payNav = NavigationAction(
+        request: URLRequest(url: WebUri('https://iyzipay.com/checkout/3dsecure-redirect')),
+        isForMainFrame: true,
+      );
+      final payHandled = await deepLinkService.handleNavigationRequest(payNav);
+      expect(payHandled, isFalse);
+
+      // 2. Bank POS gateway (garantibbva) -> MUST return false (ALLOW in WebView)
+      final bankNav = NavigationAction(
+        request: URLRequest(url: WebUri('https://sube.garantibbva.com.tr/pos/auth')),
+        isForMainFrame: true,
+      );
+      final bankHandled = await deepLinkService.handleNavigationRequest(bankNav);
+      expect(bankHandled, isFalse);
+
+      // 3. Native app URL (wa.me) -> MUST return true (handled externally)
+      final waNav = NavigationAction(
+        request: URLRequest(url: WebUri('https://wa.me/905551234567')),
+        isForMainFrame: true,
+      );
+      final waHandled = await deepLinkService.handleNavigationRequest(waNav);
+      expect(waHandled, isTrue);
+
+      // 4. External foreign site with confirmation callback
+      bool confirmationInvoked = false;
+      final extNav = NavigationAction(
+        request: URLRequest(url: WebUri('https://external-partner-site.com/offer')),
+        isForMainFrame: true,
+      );
+      final extHandled = await deepLinkService.handleNavigationRequest(
+        extNav,
+        onConfirmExternalNavigation: (uri) async {
+          confirmationInvoked = true;
+          return true;
+        },
+      );
+      expect(extHandled, isTrue);
+      expect(confirmationInvoked, isTrue);
+    });
+
     test('DeepLinkService pattern matching and internal domain verification', () {
       expect(DeepLinkService.isNativeScheme('tel'), isTrue);
       expect(DeepLinkService.isNativeScheme('whatsapp'), isTrue);
