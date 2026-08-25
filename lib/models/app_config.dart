@@ -455,6 +455,9 @@ class ThemeConfig {
   final String statusBarColorHex;
   final bool statusBarDarkIcons;
   final String splashBackgroundColorHex;
+  final bool splashShowTitle;
+  final bool splashShowLoadingBar;
+  final String splashLoadingText;
   final String themeTemplate;
 
   const ThemeConfig({
@@ -464,6 +467,9 @@ class ThemeConfig {
     required this.statusBarColorHex,
     required this.statusBarDarkIcons,
     required this.splashBackgroundColorHex,
+    this.splashShowTitle = true,
+    this.splashShowLoadingBar = true,
+    this.splashLoadingText = 'Yükleniyor...',
     required this.themeTemplate,
   });
 
@@ -495,6 +501,9 @@ class ThemeConfig {
       statusBarColorHex: json['status_bar_color'] as String? ?? '#1D4ED8',
       statusBarDarkIcons: json['status_bar_dark_icons'] as bool? ?? false,
       splashBackgroundColorHex: json['splash_background_color'] as String? ?? '#2563EB',
+      splashShowTitle: json['splash_show_title'] as bool? ?? true,
+      splashShowLoadingBar: json['splash_show_loading_bar'] as bool? ?? true,
+      splashLoadingText: json['splash_loading_text'] as String? ?? 'Yükleniyor...',
       themeTemplate: json['theme_template'] as String? ?? 'minimalist',
     );
   }
@@ -506,12 +515,16 @@ class ThemeConfig {
     'status_bar_color': statusBarColorHex,
     'status_bar_dark_icons': statusBarDarkIcons,
     'splash_background_color': splashBackgroundColorHex,
+    'splash_show_title': splashShowTitle,
+    'splash_show_loading_bar': splashShowLoadingBar,
+    'splash_loading_text': splashLoadingText,
     'theme_template': themeTemplate,
   };
 }
 
 class WebViewSettingsConfig {
   final bool showAppBar;
+  final bool appBarCenterTitle;
   final bool pullToRefresh;
   final bool showProgressBar;
   final String progressBarColorHex;
@@ -531,6 +544,7 @@ class WebViewSettingsConfig {
 
   const WebViewSettingsConfig({
     this.showAppBar = true,
+    this.appBarCenterTitle = true,
     required this.pullToRefresh,
     required this.showProgressBar,
     required this.progressBarColorHex,
@@ -552,6 +566,7 @@ class WebViewSettingsConfig {
   factory WebViewSettingsConfig.fromJson(Map<String, dynamic> json) {
     return WebViewSettingsConfig(
       showAppBar: json['show_app_bar'] as bool? ?? true,
+      appBarCenterTitle: json['app_bar_center_title'] as bool? ?? true,
       pullToRefresh: json['pull_to_refresh'] as bool? ?? true,
       showProgressBar: json['show_progress_bar'] as bool? ?? true,
       progressBarColorHex: json['progress_bar_color'] as String? ?? '#3B82F6',
@@ -573,6 +588,7 @@ class WebViewSettingsConfig {
 
   Map<String, dynamic> toJson() => {
     'show_app_bar': showAppBar,
+    'app_bar_center_title': appBarCenterTitle,
     'pull_to_refresh': pullToRefresh,
     'show_progress_bar': showProgressBar,
     'progress_bar_color': progressBarColorHex,

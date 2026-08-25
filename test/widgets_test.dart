@@ -145,16 +145,44 @@ void main() {
   });
 
   group('ShimmerLoadingView Zero CLS Tests', () {
-    testWidgets('ShimmerLoadingView renders structured skeleton placeholders', (tester) async {
+    testWidgets('ShimmerLoadingView renders structured skeleton placeholders and default text', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: ShimmerLoadingView(theme: defaultTheme),
+            body: ShimmerLoadingView(
+              theme: defaultTheme,
+              appName: 'TestApp',
+            ),
           ),
         ),
       );
 
       expect(find.byType(ShimmerLoadingView), findsOneWidget);
+      expect(find.text('TestApp'), findsOneWidget);
+      expect(find.text('Yükleniyor...'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsOneWidget);
+      await tester.pump(const Duration(milliseconds: 100));
+    });
+
+    testWidgets('ShimmerLoadingView respects splashShowTitle, splashShowLoadingBar, and splashLoadingText flags', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: ShimmerLoadingView(
+              theme: defaultTheme,
+              appName: 'HiddenTitleApp',
+              splashShowTitle: false,
+              splashShowLoadingBar: false,
+              splashLoadingText: 'Özel Veriler Alınıyor...',
+            ),
+          ),
+        ),
+      );
+
+      expect(find.byType(ShimmerLoadingView), findsOneWidget);
+      expect(find.text('HiddenTitleApp'), findsNothing);
+      expect(find.text('Özel Veriler Alınıyor...'), findsOneWidget);
+      expect(find.byType(LinearProgressIndicator), findsNothing);
       await tester.pump(const Duration(milliseconds: 100));
     });
   });

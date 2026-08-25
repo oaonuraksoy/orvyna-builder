@@ -23,6 +23,9 @@ void main() {
           'status_bar_color': '#1D4ED8',
           'status_bar_dark_icons': false,
           'splash_background_color': '#2563EB',
+          'splash_show_title': true,
+          'splash_show_loading_bar': true,
+          'splash_loading_text': 'Yükleniyor...',
           'theme_template': 'minimalist',
         },
         'navigation': {
@@ -47,6 +50,8 @@ void main() {
           ],
         },
         'webview_settings': {
+          'show_app_bar': true,
+          'app_bar_center_title': true,
           'pull_to_refresh': true,
           'show_progress_bar': true,
           'progress_bar_color': '#3B82F6',
@@ -117,6 +122,10 @@ void main() {
       expect(config.webviewSettings.forceMobileViewport, isTrue);
       expect(config.webviewSettings.disallowOverScroll, isFalse);
       expect(config.webviewSettings.supportZoom, isTrue);
+      expect(config.theme.splashShowTitle, isTrue);
+      expect(config.theme.splashShowLoadingBar, isTrue);
+      expect(config.theme.splashLoadingText, equals('Yükleniyor...'));
+      expect(config.webviewSettings.appBarCenterTitle, isTrue);
       expect(config.adblockSettings.enabled, isTrue);
       expect(config.adblockSettings.blockedSelectors, contains('.adsbygoogle'));
       expect(config.monetization.bannerEnabled, isTrue);
@@ -127,6 +136,10 @@ void main() {
       expect(serialized['app_info']['app_name'], equals('Test Web App'));
       expect(serialized['app_info']['app_version'], equals('1.2.3'));
       expect(serialized['app_info']['build_number'], equals(42));
+      expect(serialized['theme']['splash_show_title'], isTrue);
+      expect(serialized['theme']['splash_show_loading_bar'], isTrue);
+      expect(serialized['theme']['splash_loading_text'], equals('Yükleniyor...'));
+      expect(serialized['webview_settings']['app_bar_center_title'], isTrue);
       expect(serialized['navigation']['enabled'], isTrue);
       expect(serialized['navigation']['block_external_urls'], isFalse);
     });

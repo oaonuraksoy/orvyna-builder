@@ -377,7 +377,7 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
                     ),
                   ),
                 ),
-                centerTitle: true,
+                centerTitle: widget.config.webviewSettings.appBarCenterTitle,
                 actions: [
                   IconButton(
                     icon: const Icon(Icons.refresh_rounded, size: 22.0),

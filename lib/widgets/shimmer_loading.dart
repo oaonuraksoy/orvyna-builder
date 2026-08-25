@@ -10,6 +10,9 @@ class ShimmerLoadingView extends StatelessWidget {
   final String appName;
   final String splashBase64;
   final String iconBase64;
+  final bool? splashShowTitle;
+  final bool? splashShowLoadingBar;
+  final String? splashLoadingText;
 
   const ShimmerLoadingView({
     super.key,
@@ -17,6 +20,9 @@ class ShimmerLoadingView extends StatelessWidget {
     this.appName = '',
     this.splashBase64 = '',
     this.iconBase64 = '',
+    this.splashShowTitle,
+    this.splashShowLoadingBar,
+    this.splashLoadingText,
   });
 
   @override
@@ -24,6 +30,10 @@ class ShimmerLoadingView extends StatelessWidget {
     final isDark = theme.backgroundColor.computeLuminance() < 0.5;
     final baseColor = isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0);
     final highlightColor = isDark ? const Color(0xFF334155) : const Color(0xFFF8FAFC);
+
+    final showTitle = splashShowTitle ?? theme.splashShowTitle;
+    final showLoadingBar = splashShowLoadingBar ?? theme.splashShowLoadingBar;
+    final loadingText = splashLoadingText ?? theme.splashLoadingText;
 
     ImageProvider? logoImage;
     if (splashBase64.isNotEmpty) {
@@ -100,7 +110,7 @@ class ShimmerLoadingView extends StatelessWidget {
             ),
           ),
 
-          // 2. Merkez Splash & Loading Bar Katmanı
+          // 2. Merkez Splash & Loading Bar Katmanı (Tam Dikey ve Yatay Merkezleme)
           Center(
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 32.0),
@@ -126,6 +136,7 @@ class ShimmerLoadingView extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // Logo / İkon
                   if (logoImage != null)
@@ -169,49 +180,52 @@ class ShimmerLoadingView extends StatelessWidget {
                       child: const Icon(Icons.public_rounded, size: 36.0, color: Colors.white),
                     ),
 
-                  const SizedBox(height: 16.0),
-
-                  // Uygulama Başlığı (Tam Ortalanmış & Şık Tipografi)
-                  Text(
-                    appName.isNotEmpty ? appName : 'Web2App',
-                    textAlign: TextAlign.center,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 17.5,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: -0.3,
-                      color: isDark ? Colors.white : const Color(0xFF0F172A),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18.0),
-
-                  // Şık İnce Loading Bar (Progress Bar)
-                  SizedBox(
-                    width: 140.0,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(4.0),
-                      child: LinearProgressIndicator(
-                        minHeight: 3.5,
-                        backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
-                        valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                  if (showTitle) ...[
+                    const SizedBox(height: 16.0),
+                    // Uygulama Başlığı (Tam Ortalanmış & Şık Tipografi)
+                    Text(
+                      appName.isNotEmpty ? appName : 'Web2App',
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 17.5,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3,
+                        color: isDark ? Colors.white : const Color(0xFF0F172A),
                       ),
                     ),
-                  ),
+                  ],
 
-                  const SizedBox(height: 12.0),
-
-                  // "Yükleniyor... / Lütfen bekleyin..." Metni
-                  Text(
-                    'Yükleniyor... Lütfen bekleyin...',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                  if (showLoadingBar) ...[
+                    const SizedBox(height: 18.0),
+                    // Şık İnce Loading Bar (Progress Bar)
+                    SizedBox(
+                      width: 140.0,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4.0),
+                        child: LinearProgressIndicator(
+                          minHeight: 3.5,
+                          backgroundColor: theme.primaryColor.withValues(alpha: 0.15),
+                          valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
+
+                  if (loadingText.isNotEmpty) ...[
+                    const SizedBox(height: 12.0),
+                    // Özel Yüklenme Metni (Tam Ortalanmış)
+                    Text(
+                      loadingText,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
