@@ -8,7 +8,7 @@ import 'package:image/image.dart' as img;
 ///
 /// Bu fonksiyon / script, enjekte edilmiş `app_config.json` dosyasını okuyarak:
 /// 1. AndroidManifest.xml içindeki `android:label` (@string/app_name), AdMob meta-data ve strings.xml değerlerini günceller.
-/// 2. android/app/build.gradle içindeki `applicationId` ve `namespace` değerlerini günceller.
+/// 2. android/app/build.gradle içindeki `applicationId` değerini günceller (namespace "com.web2app.app" olarak sabit kalır).
 /// 3. assets.icon_base64 ve splash_base64 verilerini Android mipmap-* ve iOS AppIcon varlıklarına dönüştürür.
 /// 4. signing.keystore_base64 verisinden `upload.keystore` ve `key.properties` dosyalarını üretir.
 /// 5. iOS Info.plist (`CFBundleDisplayName`) ve project.pbxproj (`PRODUCT_BUNDLE_IDENTIFIER`) değerlerini günceller.
@@ -159,11 +159,13 @@ List<int>? _fetchImageBytes({String? url, String? base64Str}) {
   if (url != null && url.trim().isNotEmpty && url.startsWith('http')) {
     try {
       print('  🌐 Görsel URL\'den indiriliyor: $url');
-      final curlResult = Process.runSync('curl', ['-sL', url.trim()], stdoutEncoding: null);
+      final curlResult = Process.runSync('curl', ['-sL', '--fail', '--retry', '2', url.trim()], stdoutEncoding: null);
       if (curlResult.exitCode == 0 && curlResult.stdout is List<int> && (curlResult.stdout as List<int>).isNotEmpty) {
         final bytes = curlResult.stdout as List<int>;
         print('  ✓ Görsel URL üzerinden başarıyla indirildi (${(bytes.length / 1024).toStringAsFixed(1)} KB)');
         return bytes;
+      } else {
+        print('  ⚠️ URL indirme başarısız (exitCode: ${curlResult.exitCode})');
       }
     } catch (e) {
       print('  ⚠️ URL indirme hatası ($url): $e');
@@ -219,9 +221,13 @@ void _applyAndroidConfig({
     if (manifestContent.contains('package="')) {
       manifestContent = manifestContent.replaceAll(
         RegExp(r'package="[^"]*"'),
-        'package="$packageName"',
+        'package="com.web2app.app"',
       );
     }
+    manifestContent = manifestContent.replaceAll(
+      RegExp(r'android:name="(?:\.|\w+(\.\w+)*\.)MainActivity"'),
+      'android:name="com.web2app.app.MainActivity"',
+    );
 
     final admobRegex = RegExp(
       r'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*\/?>',
@@ -242,11 +248,11 @@ void _applyAndroidConfig({
     }
 
     manifestFile.writeAsStringSync(manifestContent, encoding: utf8);
-    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", AdMob ID="$admobAppId")');
+    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob ID="$admobAppId")');
   } else {
     manifestFile.parent.createSync(recursive: true);
     manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="$packageName">
+    package="com.web2app.app">
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
@@ -254,7 +260,7 @@ void _applyAndroidConfig({
         android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name=".MainActivity"
+            android:name="com.web2app.app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
@@ -275,7 +281,7 @@ void _applyAndroidConfig({
     </application>
 </manifest>
 ''', encoding: utf8);
-    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", AdMob ID="$admobAppId")');
+    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob ID="$admobAppId")');
   }
 
   // 2. strings.xml
@@ -341,10 +347,10 @@ void _applyAndroidConfig({
     );
     content = content.replaceAll(
       RegExp(r'namespace\s*=?\s*["\x27][^"\x27]+["\x27]'),
-      'namespace = "$packageName"',
+      'namespace = "com.web2app.app"',
     );
     appBuildGradle.writeAsStringSync(content, encoding: utf8);
-    print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName")');
+    print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName", namespace="com.web2app.app")');
   } else {
     appBuildGradle.parent.createSync(recursive: true);
     appBuildGradle.writeAsStringSync('''plugins {
@@ -360,7 +366,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "$packageName"
+    namespace = "com.web2app.app"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -444,7 +450,12 @@ flutter {
         for (final entry in launcherSizes.entries) {
           final dir = entry.key;
           final size = entry.value;
-          final resized = img.copyResize(cropped, width: size, height: size);
+          final resized = img.copyResize(
+            cropped,
+            width: size,
+            height: size,
+            interpolation: img.Interpolation.cubic,
+          );
           final iconFile = File('${resDir.path}/$dir/ic_launcher.png');
           iconFile.parent.createSync(recursive: true);
           iconFile.writeAsBytesSync(img.encodePng(resized));
@@ -453,7 +464,12 @@ flutter {
         for (final entry in foregroundSizes.entries) {
           final dir = entry.key;
           final size = entry.value;
-          final resized = img.copyResize(cropped, width: size, height: size);
+          final resized = img.copyResize(
+            cropped,
+            width: size,
+            height: size,
+            interpolation: img.Interpolation.cubic,
+          );
           final fgFile = File('${resDir.path}/$dir/ic_launcher_foreground.png');
           fgFile.parent.createSync(recursive: true);
           fgFile.writeAsBytesSync(img.encodePng(resized));
@@ -470,7 +486,7 @@ flutter {
 </adaptive-icon>
 ''', encoding: utf8);
 
-        print('  ✓ Android mipmap launcher ve adaptive foreground ikonları (5 çözünürlük) 1:1 Center Crop ile üretildi');
+        print('  ✓ Android mipmap launcher ve adaptive foreground ikonları (5 çözünürlük) Cubic Antialiasing ile üretildi');
       } else {
         _writeRawIconsFallback(resDir, Uint8List.fromList(iconBytes));
       }
@@ -675,7 +691,12 @@ void _applyIosConfig({
           width: minSide,
           height: minSide,
         );
-        final resized = img.copyResize(cropped, width: 1024, height: 1024);
+        final resized = img.copyResize(
+          cropped,
+          width: 1024,
+          height: 1024,
+          interpolation: img.Interpolation.cubic,
+        );
         final opaqueRgb = _makeOpaqueRgb(resized);
         icon1024.writeAsBytesSync(img.encodePng(opaqueRgb));
       } else {
@@ -698,9 +719,9 @@ void _applyIosConfig({
   }
 }
 ''', encoding: utf8);
-      print('  ✓ iOS AppIcon.appiconset ikon varlıkları Base64 verisinden üretildi');
+      print('  ✓ iOS AppIcon.appiconset 1024x1024 HD ikon varlıkları Cubic Antialiasing ile üretildi');
     } catch (e) {
-      print('  ⚠️ iOS İkon Base64 çözülemedi: $e');
+      print('  ⚠️ iOS İkon çözülemedi: $e');
     }
   }
 

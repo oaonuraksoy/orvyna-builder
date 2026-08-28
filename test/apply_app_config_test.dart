@@ -55,6 +55,10 @@ void main() {
     <application
         android:label="Old App Name"
         android:name="\${applicationName}">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+        </activity>
     </application>
 </manifest>
 ''');
@@ -105,7 +109,8 @@ void main() {
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
       final manifestContent = manifest.readAsStringSync(encoding: utf8);
       expect(manifestContent, contains('android:label="@string/app_name"'));
-      expect(manifestContent, contains('package="com.mysuper.app"'));
+      expect(manifestContent, contains('package="com.web2app.app"'));
+      expect(manifestContent, contains('android:name="com.web2app.app.MainActivity"'));
       expect(manifestContent, contains('com.google.android.gms.ads.APPLICATION_ID'));
       expect(manifestContent, contains('ca-app-pub-3940256099942544~3347511713'));
 
@@ -119,7 +124,7 @@ void main() {
       final buildGradle = File('${tempDir.path}/android/app/build.gradle');
       final gradleContent = buildGradle.readAsStringSync(encoding: utf8);
       expect(gradleContent, contains('applicationId = "com.mysuper.app"'));
-      expect(gradleContent, contains('namespace = "com.mysuper.app"'));
+      expect(gradleContent, contains('namespace = "com.web2app.app"'));
 
       // 3. Android Mipmap Icons & Adaptive Icon Verification
       final mipmapHdpi = File('${tempDir.path}/android/app/src/main/res/mipmap-hdpi/ic_launcher.png');
