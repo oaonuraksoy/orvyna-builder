@@ -44,6 +44,10 @@ void main() {
           'key_id': 'D383X7Y27K',
           'p8_base64': 'TUlJRUV2Z0lCQURBTkJna3Foa2lHOXcwQkFRRUZBQVNDQktnd2dnU2tBZ0VBQW9JQkFRQzRk',
         },
+        'monetization': {
+          'admob_enabled': true,
+          'admob_app_id': 'ca-app-pub-3940256099942544~3347511713',
+        },
       };
       testConfigFile.writeAsStringSync(json.encode(configMap));
 
@@ -235,6 +239,7 @@ void main() {
           'package_name': 'com.turkish.app',
         },
         'monetization': {
+          'admob_enabled': true,
           'admob_app_id_android': customAdmobId,
         },
       };
@@ -388,6 +393,158 @@ void main() {
 
       // key.properties must not exist so Gradle falls back to debug signing without crashing
       expect(existingKeyProps.existsSync(), isFalse);
+    });
+
+    test('TODO-05: applyAppConfig cleans AdMob meta-data and Info.plist keys when admob_enabled is false', () {
+      // Prepopulate android manifest and iOS plist with AdMob tags
+      final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
+      manifest.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.web2app.app">
+    <application
+        android:label="@string/app_name"
+        android:name="\${applicationName}">
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
+    </application>
+</manifest>
+''');
+
+      final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
+      infoPlist.writeAsStringSync('''<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>Test</string>
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~3347511713</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Tracking description</string>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict><key>SKAdNetworkIdentifier</key><string>cstr6suwn9.skadnetwork</string></dict>
+	</array>
+</dict>
+</plist>
+''');
+
+      final configMap = {
+        'version': '1.0.0',
+        'app_info': {'app_name': 'No AdMob App', 'package_name': 'com.noadmob.app'},
+        'monetization': {'admob_enabled': false},
+      };
+      final noAdmobConfigFile = File('${tempDir.path}/app_config_no_admob.json');
+      noAdmobConfigFile.writeAsStringSync(json.encode(configMap), encoding: utf8);
+
+      applyAppConfig(
+        configPath: noAdmobConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final updatedManifest = manifest.readAsStringSync();
+      expect(updatedManifest.contains('com.google.android.gms.ads.APPLICATION_ID'), isFalse);
+
+      final updatedPlist = infoPlist.readAsStringSync();
+      expect(updatedPlist.contains('GADApplicationIdentifier'), isFalse);
+      expect(updatedPlist.contains('SKAdNetworkItems'), isFalse);
+      expect(updatedPlist.contains('NSUserTrackingUsageDescription'), isFalse);
+    });
+
+    test('TODO-06: applyAppConfig adds and removes biometric permissions in AndroidManifest.xml and Info.plist', () {
+      // 1. Test ENABLED
+      final configMapEnabled = {
+        'version': '1.0.0',
+        'app_info': {'app_name': 'Biometric App', 'package_name': 'com.bio.app'},
+        'biometric': {'enabled': true},
+      };
+      final bioConfigFile = File('${tempDir.path}/app_config_bio_enabled.json');
+      bioConfigFile.writeAsStringSync(json.encode(configMapEnabled), encoding: utf8);
+
+      applyAppConfig(
+        configPath: bioConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
+      final manifestContent = manifest.readAsStringSync();
+      expect(manifestContent.contains('android.permission.USE_BIOMETRIC'), isTrue);
+      expect(manifestContent.contains('android.permission.USE_FINGERPRINT'), isTrue);
+
+      final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
+      final plistContent = infoPlist.readAsStringSync();
+      expect(plistContent.contains('NSFaceIDUsageDescription'), isTrue);
+      expect(plistContent.contains('biyometrik kimlik doğrulama gereklidir'), isTrue);
+
+      // 2. Test DISABLED
+      final configMapDisabled = {
+        'version': '1.0.0',
+        'app_info': {'app_name': 'No Bio App', 'package_name': 'com.nobio.app'},
+        'biometric': {'enabled': false},
+      };
+      final noBioConfigFile = File('${tempDir.path}/app_config_bio_disabled.json');
+      noBioConfigFile.writeAsStringSync(json.encode(configMapDisabled), encoding: utf8);
+
+      applyAppConfig(
+        configPath: noBioConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final disabledManifest = manifest.readAsStringSync();
+      expect(disabledManifest.contains('android.permission.USE_BIOMETRIC'), isFalse);
+      expect(disabledManifest.contains('android.permission.USE_FINGERPRINT'), isFalse);
+
+      final disabledPlist = infoPlist.readAsStringSync();
+      expect(disabledPlist.contains('NSFaceIDUsageDescription'), isFalse);
+    });
+
+    test('TODO-07: applyAppConfig adds and removes push notification permissions in Android and iOS', () {
+      // 1. Test ENABLED
+      final configMapEnabled = {
+        'version': '1.0.0',
+        'app_info': {'app_name': 'Push App', 'package_name': 'com.push.app'},
+        'notifications': {'enabled': true},
+      };
+      final pushConfigFile = File('${tempDir.path}/app_config_push_enabled.json');
+      pushConfigFile.writeAsStringSync(json.encode(configMapEnabled), encoding: utf8);
+
+      applyAppConfig(
+        configPath: pushConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
+      final manifestContent = manifest.readAsStringSync();
+      expect(manifestContent.contains('android.permission.POST_NOTIFICATIONS'), isTrue);
+
+      final infoPlist = File('${tempDir.path}/ios/Runner/Info.plist');
+      final plistContent = infoPlist.readAsStringSync();
+      expect(plistContent.contains('UIBackgroundModes'), isTrue);
+      expect(plistContent.contains('remote-notification'), isTrue);
+
+      // 2. Test DISABLED
+      final configMapDisabled = {
+        'version': '1.0.0',
+        'app_info': {'app_name': 'No Push App', 'package_name': 'com.nopush.app'},
+        'notifications': {'enabled': false},
+      };
+      final noPushConfigFile = File('${tempDir.path}/app_config_push_disabled.json');
+      noPushConfigFile.writeAsStringSync(json.encode(configMapDisabled), encoding: utf8);
+
+      applyAppConfig(
+        configPath: noPushConfigFile.path,
+        platform: 'all',
+        baseDir: tempDir,
+      );
+
+      final disabledManifest = manifest.readAsStringSync();
+      expect(disabledManifest.contains('android.permission.POST_NOTIFICATIONS'), isFalse);
+
+      final disabledPlist = infoPlist.readAsStringSync();
+      expect(disabledPlist.contains('remote-notification'), isFalse);
     });
   });
 }

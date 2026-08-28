@@ -57,6 +57,23 @@ void applyAppConfig({
   final signing = config['signing'] as Map<String, dynamic>? ?? {};
   final appStore = config['app_store_connect'] as Map<String, dynamic>? ?? {};
   final monetization = config['monetization'] as Map<String, dynamic>? ?? {};
+  final security = config['security'] as Map<String, dynamic>? ?? {};
+  final biometric = config['biometric'] as Map<String, dynamic>? ??
+      (config['biometric_auth'] as Map<String, dynamic>? ??
+          (security['biometric'] as Map<String, dynamic>? ?? {}));
+  final notifications = config['notifications'] as Map<String, dynamic>? ?? {};
+  final permissions = config['permissions'] as Map<String, dynamic>? ?? {};
+
+  final bool isAdmobEnabled = monetization['admob_enabled'] == true || config['admob_enabled'] == true;
+  final bool isBiometricEnabled = biometric['enabled'] == true ||
+      config['biometric_auth']?['enabled'] == true ||
+      config['biometric']?['enabled'] == true ||
+      security['biometric_auth'] == true ||
+      security['biometric'] == true;
+  final bool isPushEnabled = notifications['onesignal_enabled'] == true ||
+      permissions['notifications'] == true ||
+      notifications['enabled'] == true ||
+      config['push_notifications_enabled'] == true;
 
   final String appName = appInfo['app_name']?.toString() ?? appInfo['name']?.toString() ?? 'Web2App';
   final String packageName = appInfo['package_name']?.toString() ?? appInfo['package']?.toString() ?? 'com.web2app.app';
@@ -93,7 +110,9 @@ void applyAppConfig({
   print('📦 Uygulama Adı      : $appName');
   print('🆔 Paket Kimliği     : $packageName');
   print('🏷️  Sürüm              : v$appVersion+$buildNumber');
-  print('📢 AdMob App ID       : $admobAppId');
+  print('📢 AdMob              : ${isAdmobEnabled ? "Aktif ($admobAppId)" : "Devre Dışı"}');
+  print('🔐 Biyometrik Kilit   : ${isBiometricEnabled ? "Aktif" : "Devre Dışı"}');
+  print('🔔 Push Bildirimleri  : ${isPushEnabled ? "Aktif" : "Devre Dışı"}');
   print('🎨 İkon Kaynağı      : ${iconUrl.isNotEmpty ? "URL ($iconUrl)" : (iconBase64.isNotEmpty ? "Base64 (${(iconBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Varsayılan)")}');
   print('✨ Splash Kaynağı    : ${splashUrl.isNotEmpty ? "URL ($splashUrl)" : (splashBase64.isNotEmpty ? "Base64 (${(splashBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Varsayılan)")}');
   print('🔑 Keystore          : ${keystoreBase64.isNotEmpty ? "Mevcut (${(keystoreBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Debug/Unsigned)"}');
@@ -109,7 +128,10 @@ void applyAppConfig({
       androidRoot: androidRoot,
       appName: appName,
       packageName: packageName,
+      isAdmobEnabled: isAdmobEnabled,
       admobAppId: admobAppId,
+      isBiometricEnabled: isBiometricEnabled,
+      isPushEnabled: isPushEnabled,
       iconBase64: iconBase64,
       iconUrl: iconUrl,
       splashBase64: splashBase64,
@@ -128,6 +150,10 @@ void applyAppConfig({
       iosRoot: iosRoot,
       appName: appName,
       packageName: packageName,
+      isAdmobEnabled: isAdmobEnabled,
+      admobAppId: admobAppId,
+      isBiometricEnabled: isBiometricEnabled,
+      isPushEnabled: isPushEnabled,
       iconBase64: iconBase64,
       iconUrl: iconUrl,
       appStoreIssuerId: appStoreIssuerId,
@@ -200,7 +226,10 @@ void _applyAndroidConfig({
   required String androidRoot,
   required String appName,
   required String packageName,
+  bool isAdmobEnabled = false,
   required String admobAppId,
+  bool isBiometricEnabled = false,
+  bool isPushEnabled = false,
   required String iconBase64,
   String iconUrl = '',
   required String splashBase64,
@@ -229,32 +258,100 @@ void _applyAndroidConfig({
       'android:name="com.web2app.app.MainActivity"',
     );
 
+    // TODO-05: AdMob Android Configuration
     final admobRegex = RegExp(
-      r'<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*\/?>',
+      r'\s*<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*\/?>',
       caseSensitive: false,
       multiLine: true,
       dotAll: true,
     );
-    if (admobRegex.hasMatch(manifestContent)) {
-      manifestContent = manifestContent.replaceAll(
-        admobRegex,
-        '<meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>',
-      );
+    if (isAdmobEnabled) {
+      if (admobRegex.hasMatch(manifestContent)) {
+        manifestContent = manifestContent.replaceAll(
+          admobRegex,
+          '\n        <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>',
+        );
+      } else {
+        manifestContent = manifestContent.replaceFirst(
+          '</application>',
+          '    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>\n    </application>',
+        );
+      }
     } else {
-      manifestContent = manifestContent.replaceFirst(
-        '</application>',
-        '    <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>\n    </application>',
-      );
+      manifestContent = manifestContent.replaceAll(admobRegex, '');
+    }
+
+    // TODO-06: Biyometrik Kilit Android Permissions (USE_BIOMETRIC & USE_FINGERPRINT)
+    final biometricRegex = RegExp(
+      r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.USE_BIOMETRIC"[^>]*\/?>',
+      caseSensitive: false,
+      multiLine: true,
+      dotAll: true,
+    );
+    final fingerprintRegex = RegExp(
+      r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.USE_FINGERPRINT"[^>]*\/?>',
+      caseSensitive: false,
+      multiLine: true,
+      dotAll: true,
+    );
+    if (isBiometricEnabled) {
+      if (!manifestContent.contains('android.permission.USE_BIOMETRIC')) {
+        manifestContent = manifestContent.replaceFirst(
+          '<application',
+          '    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>\n    <application',
+        );
+      }
+      if (!manifestContent.contains('android.permission.USE_FINGERPRINT')) {
+        manifestContent = manifestContent.replaceFirst(
+          '<application',
+          '    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>\n    <application',
+        );
+      }
+    } else {
+      manifestContent = manifestContent.replaceAll(biometricRegex, '');
+      manifestContent = manifestContent.replaceAll(fingerprintRegex, '');
+    }
+
+    // TODO-07: Push Bildirim Android Permission (POST_NOTIFICATIONS)
+    final postNotifRegex = RegExp(
+      r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.POST_NOTIFICATIONS"[^>]*\/?>',
+      caseSensitive: false,
+      multiLine: true,
+      dotAll: true,
+    );
+    if (isPushEnabled) {
+      if (!manifestContent.contains('android.permission.POST_NOTIFICATIONS')) {
+        manifestContent = manifestContent.replaceFirst(
+          '<application',
+          '    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>\n    <application',
+        );
+      }
+    } else {
+      manifestContent = manifestContent.replaceAll(postNotifRegex, '');
     }
 
     manifestFile.writeAsStringSync(manifestContent, encoding: utf8);
-    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob ID="$admobAppId")');
+    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   } else {
     manifestFile.parent.createSync(recursive: true);
+    final permBuffer = StringBuffer();
+    permBuffer.writeln('    <uses-permission android:name="android.permission.INTERNET"/>');
+    permBuffer.writeln('    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>');
+    if (isBiometricEnabled) {
+      permBuffer.writeln('    <uses-permission android:name="android.permission.USE_BIOMETRIC"/>');
+      permBuffer.writeln('    <uses-permission android:name="android.permission.USE_FINGERPRINT"/>');
+    }
+    if (isPushEnabled) {
+      permBuffer.writeln('    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>');
+    }
+
+    final admobTag = isAdmobEnabled
+        ? '        <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>\n'
+        : '';
+
     manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.web2app.app">
-    <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+${permBuffer.toString().trimRight()}
     <application
         android:label="@string/app_name"
         android:name="\${applicationName}"
@@ -272,16 +369,13 @@ void _applyAndroidConfig({
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="$admobAppId"/>
-        <meta-data
+$admobTag        <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
     </application>
 </manifest>
 ''', encoding: utf8);
-    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob ID="$admobAppId")');
+    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   }
 
   // 2. strings.xml
@@ -561,6 +655,10 @@ void _applyIosConfig({
   required String iosRoot,
   required String appName,
   required String packageName,
+  bool isAdmobEnabled = false,
+  String admobAppId = '',
+  bool isBiometricEnabled = false,
+  bool isPushEnabled = false,
   required String iconBase64,
   String iconUrl = '',
   required String appStoreIssuerId,
@@ -579,10 +677,110 @@ void _applyIosConfig({
       RegExp(r'<key>CFBundleName<\/key>\s*<string>[^<]*<\/string>'),
       '<key>CFBundleName</key>\n\t<string>$appName</string>',
     );
+
+    // TODO-05: AdMob iOS (GADApplicationIdentifier, SKAdNetworkItems, NSUserTrackingUsageDescription)
+    if (isAdmobEnabled) {
+      if (plistContent.contains('<key>GADApplicationIdentifier</key>')) {
+        plistContent = plistContent.replaceAll(
+          RegExp(r'<key>GADApplicationIdentifier<\/key>\s*<string>[^<]*<\/string>'),
+          '<key>GADApplicationIdentifier</key>\n\t<string>$admobAppId</string>',
+        );
+      } else {
+        plistContent = plistContent.replaceFirst(
+          '</dict>',
+          '\t<key>GADApplicationIdentifier</key>\n\t<string>$admobAppId</string>\n</dict>',
+        );
+      }
+
+      if (!plistContent.contains('<key>NSUserTrackingUsageDescription</key>')) {
+        plistContent = plistContent.replaceFirst(
+          '</dict>',
+          '\t<key>NSUserTrackingUsageDescription</key>\n\t<string>Size daha iyi bir reklam deneyimi sunabilmek için izninize ihtiyaç duyulmaktadır.</string>\n</dict>',
+        );
+      }
+    } else {
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<key>GADApplicationIdentifier<\/key>\s*<string>[^<]*<\/string>'),
+        '',
+      );
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<key>SKAdNetworkItems<\/key>\s*<array>[\s\S]*?<\/array>'),
+        '',
+      );
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<key>NSUserTrackingUsageDescription<\/key>\s*<string>[^<]*<\/string>'),
+        '',
+      );
+    }
+
+    // TODO-06: Biyometrik Kilit iOS (NSFaceIDUsageDescription)
+    if (isBiometricEnabled) {
+      if (plistContent.contains('<key>NSFaceIDUsageDescription</key>')) {
+        plistContent = plistContent.replaceAll(
+          RegExp(r'<key>NSFaceIDUsageDescription<\/key>\s*<string>[^<]*<\/string>'),
+          '<key>NSFaceIDUsageDescription</key>\n\t<string>Uygulamaya güvenli giriş yapmak için biyometrik kimlik doğrulama gereklidir.</string>',
+        );
+      } else {
+        plistContent = plistContent.replaceFirst(
+          '</dict>',
+          '\t<key>NSFaceIDUsageDescription</key>\n\t<string>Uygulamaya güvenli giriş yapmak için biyometrik kimlik doğrulama gereklidir.</string>\n</dict>',
+        );
+      }
+    } else {
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<key>NSFaceIDUsageDescription<\/key>\s*<string>[^<]*<\/string>'),
+        '',
+      );
+    }
+
+    // TODO-07: Push Bildirim iOS (UIBackgroundModes -> remote-notification)
+    if (isPushEnabled) {
+      if (plistContent.contains('<key>UIBackgroundModes</key>')) {
+        if (!plistContent.contains('<string>remote-notification</string>')) {
+          plistContent = plistContent.replaceFirst(
+            RegExp(r'<key>UIBackgroundModes<\/key>\s*<array>'),
+            '<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>',
+          );
+        }
+      } else {
+        plistContent = plistContent.replaceFirst(
+          '</dict>',
+          '\t<key>UIBackgroundModes</key>\n\t<array>\n\t\t<string>remote-notification</string>\n\t</array>\n</dict>',
+        );
+      }
+    } else {
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<string>remote-notification<\/string>'),
+        '',
+      );
+      plistContent = plistContent.replaceAll(
+        RegExp(r'\s*<key>UIBackgroundModes<\/key>\s*<array>\s*<\/array>'),
+        '',
+      );
+    }
+
     infoPlistFile.writeAsStringSync(plistContent, encoding: utf8);
-    print('  ✓ ios/Runner/Info.plist güncellendi (CFBundleDisplayName="$appName")');
+    print('  ✓ ios/Runner/Info.plist güncellendi (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   } else {
     infoPlistFile.parent.createSync(recursive: true);
+    final iosExtras = StringBuffer();
+    if (isAdmobEnabled) {
+      iosExtras.writeln('\t<key>GADApplicationIdentifier</key>');
+      iosExtras.writeln('\t<string>$admobAppId</string>');
+      iosExtras.writeln('\t<key>NSUserTrackingUsageDescription</key>');
+      iosExtras.writeln('\t<string>Size daha iyi bir reklam deneyimi sunabilmek için izninize ihtiyaç duyulmaktadır.</string>');
+    }
+    if (isBiometricEnabled) {
+      iosExtras.writeln('\t<key>NSFaceIDUsageDescription</key>');
+      iosExtras.writeln('\t<string>Uygulamaya güvenli giriş yapmak için biyometrik kimlik doğrulama gereklidir.</string>');
+    }
+    if (isPushEnabled) {
+      iosExtras.writeln('\t<key>UIBackgroundModes</key>');
+      iosExtras.writeln('\t<array>');
+      iosExtras.writeln('\t\t<string>remote-notification</string>');
+      iosExtras.writeln('\t</array>');
+    }
+
     infoPlistFile.writeAsStringSync('''<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -625,10 +823,11 @@ void _applyIosConfig({
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+${iosExtras.toString().trimRight()}
 </dict>
 </plist>
 ''', encoding: utf8);
-    print('  ✓ ios/Runner/Info.plist oluşturuldu');
+    print('  ✓ ios/Runner/Info.plist oluşturuldu (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   }
 
   // 2. project.pbxproj (PRODUCT_BUNDLE_IDENTIFIER)
