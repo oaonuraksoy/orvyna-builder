@@ -212,6 +212,7 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      widget.admobService.showAppOpenAdIfAvailable();
       if (widget.biometricService.isEnabled && widget.biometricService.isAuthRequired) {
         setState(() => _isBiometricLocked = true);
         _triggerBiometricAuth();
@@ -235,6 +236,8 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
     super.dispose();
   }
 
+  String? _startupPendingUrl;
+
   void _handleIncomingUrl(String url) {
     if (url.startsWith('custom://')) {
       final pageId = url.replaceFirst('custom://', '').trim();
@@ -253,7 +256,18 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
     setState(() {
       _activeCustomPage = null;
     });
-    _webViewKey.currentState?.loadUrl(url);
+    
+    if (_webViewKey.currentState != null) {
+      _webViewKey.currentState?.loadUrl(url);
+    } else {
+      _startupPendingUrl = url;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_startupPendingUrl != null && _webViewKey.currentState != null) {
+          _webViewKey.currentState?.loadUrl(_startupPendingUrl!);
+          _startupPendingUrl = null;
+        }
+      });
+    }
   }
 
   void _navigateToHome() {

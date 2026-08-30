@@ -61,8 +61,10 @@ jobs:
 
       - name: Enjekte Edilmiş app_config.json Uygula
         if: "${{ github.event.inputs.app_config_json != '' }}"
+        env:
+          CONFIG_JSON: ${{ github.event.inputs.app_config_json }}
         run: |
-          echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
+          echo "$CONFIG_JSON" > assets/config/app_config.json
 
       - name: Install Dependencies
         run: flutter pub get

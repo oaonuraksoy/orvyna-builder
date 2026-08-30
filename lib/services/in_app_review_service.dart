@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:in_app_review/in_app_review.dart';
 import '../models/app_config.dart';
 
 /// Akıllı Mağaza İçi Puanlama ve Değerlendirme Servisi
 class InAppReviewService {
   final InAppReviewConfig config;
   final String? packageName;
+  final InAppReview _inAppReview = InAppReview.instance;
 
   int _launchCount = 0;
   int _actionCount = 0;
@@ -59,6 +61,12 @@ class InAppReviewService {
     String? storeUrl,
   }) async {
     _hasPrompted = true;
+    try {
+      if (await _inAppReview.isAvailable()) {
+        await _inAppReview.requestReview();
+        return true;
+      }
+    } catch (_) {}
 
     if (context != null && context.mounted) {
       return await showRatingDialog(context, storeUrl: storeUrl);
@@ -70,6 +78,13 @@ class InAppReviewService {
 
   /// Mağaza sayfasını açar (Google Play veya App Store)
   Future<void> openStoreListing(String? targetUrl) async {
+    try {
+      if (await _inAppReview.isAvailable()) {
+        await _inAppReview.openStoreListing(appStoreId: packageName);
+        return;
+      }
+    } catch (_) {}
+
     final effectiveUrl = (targetUrl != null && targetUrl.isNotEmpty)
         ? targetUrl
         : (config.customReviewUrl.isNotEmpty

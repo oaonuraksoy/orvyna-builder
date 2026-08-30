@@ -3,6 +3,9 @@ import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../models/app_config.dart';
 
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+
 /// Mobil motor çalışma zamanı izin yöneticisi (Native & WebRTC)
 class PermissionService {
   final PermissionsConfig config;
@@ -17,8 +20,18 @@ class PermissionService {
     if (config.microphone) permissionsToRequest.add(Permission.microphone);
     if (config.location) permissionsToRequest.add(Permission.locationWhenInUse);
     if (config.storage) {
-      permissionsToRequest.add(Permission.storage);
-      permissionsToRequest.add(Permission.photos);
+      if (Platform.isAndroid) {
+        final androidInfo = await DeviceInfoPlugin().androidInfo;
+        if (androidInfo.version.sdkInt >= 33) {
+          permissionsToRequest.add(Permission.photos);
+          permissionsToRequest.add(Permission.videos);
+        } else {
+          permissionsToRequest.add(Permission.storage);
+        }
+      } else {
+        permissionsToRequest.add(Permission.storage);
+        permissionsToRequest.add(Permission.photos);
+      }
     }
     if (config.notifications) permissionsToRequest.add(Permission.notification);
 

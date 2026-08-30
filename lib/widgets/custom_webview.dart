@@ -96,11 +96,17 @@ class CustomWebViewState extends State<CustomWebView> {
     }
   }
 
+  String? _pendingRouteUrl;
+
   /// Harici URL yükleme metodu (Örn: OneSignal bildiriminden tetiklenen)
   Future<void> loadUrl(String urlString) async {
     try {
       if (urlString.startsWith('custom://')) {
         widget.onCustomPageRequested?.call(urlString);
+        return;
+      }
+      if (webViewController == null) {
+        _pendingRouteUrl = urlString;
         return;
       }
       final uri = WebUri(urlString);
@@ -284,6 +290,12 @@ class CustomWebViewState extends State<CustomWebView> {
                   _isContentReady = true;
                   _loadingProgress = 1.0;
                 });
+              }
+
+              if (_pendingRouteUrl != null) {
+                final urlToLoad = _pendingRouteUrl!;
+                _pendingRouteUrl = null;
+                await loadUrl(urlToLoad);
               }
             },
             onReceivedError: (controller, request, error) {

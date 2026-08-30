@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import '../models/app_config.dart';
 
 /// 4 Farklı Çevrimdışı Modunu (Standard, Custom HTML, Cache Fallback, Mini Dino Game) destekleyen gelişmiş çevrimdışı ekranı
@@ -299,12 +300,22 @@ class _InteractiveDinoGameWidgetState extends State<_InteractiveDinoGameWidget>
   double _obstacleX = 1.2; // 1.2 = sağdan giriyor, -0.3 = soldan çıktı
   double _obstacleSpeed = 0.016;
 
-  Timer? _gameLoopTimer;
+  late final Ticker _ticker;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticker = createTicker(_onTick);
+  }
 
   @override
   void dispose() {
-    _gameLoopTimer?.cancel();
+    _ticker.dispose();
     super.dispose();
+  }
+
+  void _onTick(Duration elapsed) {
+    _updateGame();
   }
 
   void _startGame() {
@@ -318,10 +329,9 @@ class _InteractiveDinoGameWidgetState extends State<_InteractiveDinoGameWidget>
       _obstacleSpeed = 0.016;
     });
 
-    _gameLoopTimer?.cancel();
-    _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
-      _updateGame();
-    });
+    if (!_ticker.isTicking) {
+      _ticker.start();
+    }
   }
 
   void _jump() {
@@ -366,7 +376,7 @@ class _InteractiveDinoGameWidgetState extends State<_InteractiveDinoGameWidget>
       if (_obstacleX > 0.08 && _obstacleX < 0.24 && _dinoY < 0.28) {
         _isGameOver = true;
         _isPlaying = false;
-        _gameLoopTimer?.cancel();
+        _ticker.stop();
       }
     });
   }

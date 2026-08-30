@@ -61,8 +61,11 @@ jobs:
 
       - name: Enjekte Edilmiş app_config.json Uygula
         if: "${{ github.event.inputs.app_config_json != '' }}"
+        env:
+          CONFIG_JSON: ${{ github.event.inputs.app_config_json }}
         run: |
-          echo '${{ github.event.inputs.app_config_json }}' > assets/config/app_config.json
+          echo "::add-mask::$CONFIG_JSON"
+          echo "$CONFIG_JSON" > assets/config/app_config.json
 
       - name: Install Flutter Dependencies
         run: flutter pub get
@@ -81,6 +84,8 @@ jobs:
           APPLE_CERTIFICATE_PASS: ${{ secrets.APPLE_CERTIFICATE_PASS }}
         working-directory: ./ios
         run: |
+          echo "::add-mask::${{ secrets.APP_STORE_CONNECT_API_KEY }}"
+          echo "::add-mask::${{ secrets.APPLE_CERTIFICATE_PASS }}"
           if [ -f "Fastfile" ] || [ -f "fastlane/Fastfile" ]; then
             bundle exec fastlane beta
           else

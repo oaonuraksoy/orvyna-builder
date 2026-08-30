@@ -273,7 +273,9 @@ class DeepLinkService {
       if (canLaunch) {
         return await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        return await launchUrl(uri, mode: LaunchMode.externalApplication);
+        debugPrint('[DeepLinkService] Uygulama bulunamadı veya başlatılamıyor: $uri');
+        // İsteğe bağlı olarak ilgili mağazaya yönlendirme gibi bir fallback eklenebilir.
+        return false;
       }
     } catch (e) {
       debugPrint('[DeepLinkService] Yerel uygulama başlatma hatası ($uri): $e');

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:local_auth/local_auth.dart';
 import '../models/app_config.dart';
 
 /// Face ID / Fingerprint & Biyometrik Kimlik Doğrulama Servisi
@@ -63,12 +64,36 @@ class BiometricService {
       return true;
     }
 
-    // Eğer Context varsa modern bir güvenlik doğrulama arayüzü sun
     if (context != null && context.mounted) {
-      final success = await showBiometricPrompt(context, customReason: customReason);
-      if (success) {
-        markUnlocked();
-        return true;
+      try {
+        final localAuth = LocalAuthentication();
+        final isSupported = await localAuth.isDeviceSupported();
+        final canCheckBiometrics = await localAuth.canCheckBiometrics;
+        
+        if (!isSupported || !canCheckBiometrics) {
+          // Fallback to custom view or native fallback if device not supported
+          if (config.allowFallback) {
+             final success = await showBiometricPrompt(context, customReason: customReason);
+             if (success) { markUnlocked(); return true; }
+          }
+          return false;
+        }
+        
+        final authenticated = await localAuth.authenticate(
+          localizedReason: customReason ?? (config.promptSubtitle.isNotEmpty ? config.promptSubtitle : 'Uygulamaya erişmek için doğrulama gerekiyor'),
+          options: AuthenticationOptions(
+            useErrorDialogs: true,
+            stickyAuth: true,
+            biometricOnly: !config.allowFallback,
+          ),
+        );
+        
+        if (authenticated) {
+          markUnlocked();
+          return true;
+        }
+      } on PlatformException catch (_) {
+         // Fallback on error
       }
       return false;
     }

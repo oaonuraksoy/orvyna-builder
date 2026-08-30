@@ -19,6 +19,9 @@ dependencies:
   shimmer: ^3.0.0
   flutter_svg: ^2.0.17
   image: ^4.5.4
+  local_auth: ^2.3.0
+  in_app_review: ^2.0.9
+  device_info_plus: ^10.1.0
 
 dev_dependencies:
   flutter_test:
