@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile_engine/models/app_config.dart';
-import 'package:mobile_engine/widgets/custom_page_view.dart';
-import 'package:mobile_engine/widgets/offline_screen.dart';
-import 'package:mobile_engine/widgets/shimmer_loading.dart';
+import 'package:orvyna_engine/models/app_config.dart';
+import 'package:orvyna_engine/widgets/custom_page_view.dart';
+import 'package:orvyna_engine/widgets/offline_screen.dart';
+import 'package:orvyna_engine/widgets/shimmer_loading.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

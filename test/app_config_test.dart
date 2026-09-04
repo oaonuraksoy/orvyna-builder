@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:mobile_engine/models/app_config.dart';
-import 'package:mobile_engine/services/deeplink_service.dart';
+import 'package:orvyna_engine/models/app_config.dart';
+import 'package:orvyna_engine/services/deeplink_service.dart';
 
 void main() {
   group('AppConfig Tests', () {
@@ -625,8 +625,8 @@ void main() {
       final jsonMap = {
         'version': '1.0.0',
         'app_info': {
-          'app_name': 'Web2App Advanced',
-          'package_name': 'com.web2app.adv',
+          'app_name': 'Orvyna Advanced',
+          'package_name': 'com.orvyna.adv',
           'web_url': 'https://example.com',
           'user_agent': 'CustomEngineUA',
           'app_version': '2.0.0',

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile_engine/models/app_config.dart';
-import 'package:mobile_engine/widgets/floating_support_button.dart';
+import 'package:orvyna_engine/models/app_config.dart';
+import 'package:orvyna_engine/widgets/floating_support_button.dart';
 
 void main() {
   group('FloatingSupportButton Widget & Config Tests', () {

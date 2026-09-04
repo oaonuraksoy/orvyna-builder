@@ -4,22 +4,22 @@ import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
 
-/// Web2App Bulut & CI/CD KonfigÃ¼rasyon UygulayÄ±cÄ± (Build Preprocessor)
+/// Orvyna Bulut & CI/CD Konfigürasyon Uygulayıcı (Build Preprocessor)
 ///
-/// Bu fonksiyon / script, enjekte edilmiÅŸ `app_config.json` dosyasÄ±nÄ± okuyarak:
-/// 1. AndroidManifest.xml iÃ§indeki `android:label` (@string/app_name), AdMob meta-data ve strings.xml deÄŸerlerini gÃ¼nceller.
-/// 2. android/app/build.gradle iÃ§indeki `applicationId` deÄŸerini gÃ¼nceller (namespace "com.web2app.app" olarak sabit kalÄ±r).
-/// 3. assets.icon_base64 ve splash_base64 verilerini Android mipmap-* ve iOS AppIcon varlÄ±klarÄ±na dÃ¶nÃ¼ÅŸtÃ¼rÃ¼r.
-/// 4. signing.keystore_base64 verisinden `upload.keystore` ve `key.properties` dosyalarÄ±nÄ± Ã¼retir.
-/// 5. iOS Info.plist (`CFBundleDisplayName`) ve project.pbxproj (`PRODUCT_BUNDLE_IDENTIFIER`) deÄŸerlerini gÃ¼nceller.
-/// 6. App Store Connect p8 API anahtarÄ±nÄ± ve Fastlane yapÄ±landÄ±rmasÄ±nÄ± oluÅŸturur.
+/// Bu fonksiyon / script, enjekte edilmiş `app_config.json` dosyasını okuyarak:
+/// 1. AndroidManifest.xml içindeki `android:label` (@string/app_name), AdMob meta-data ve strings.xml değerlerini günceller.
+/// 2. android/app/build.gradle içindeki `applicationId` değerini günceller (namespace "com.orvyna.app" olarak sabit kalır).
+/// 3. assets.icon_base64 ve splash_base64 verilerini Android mipmap-* ve iOS AppIcon varlıklarına dönüştürür.
+/// 4. signing.keystore_base64 verisinden `upload.keystore` ve `key.properties` dosyalarını üretir.
+/// 5. iOS Info.plist (`CFBundleDisplayName`) ve project.pbxproj (`PRODUCT_BUNDLE_IDENTIFIER`) değerlerini günceller.
+/// 6. App Store Connect p8 API anahtarını ve Fastlane yapılandırmasını oluşturur.
 void applyAppConfig({
   String configPath = 'assets/config/app_config.json',
   String platform = 'all',
   Directory? baseDir,
 }) {
   print('================================================================');
-  print('ğŸš€ [Web2App] KonfigÃ¼rasyon Ã–n-HazÄ±rlÄ±k ve Otomatik Uygulama BaÅŸladÄ±');
+  print('🚀 [Orvyna] Konfigürasyon Ön-Hazırlık ve Otomatik Uygulama Başladı');
   print('================================================================');
 
   Directory workingDir = baseDir ?? Directory.current;
@@ -37,18 +37,18 @@ void applyAppConfig({
   }
 
   if (!configFile.existsSync()) {
-    print('âš ï¸ [Web2App] KonfigÃ¼rasyon dosyasÄ± bulunamadÄ±: ${configFile.path}');
-    print('â„¹ï¸ VarsayÄ±lan ayarlar korunacak.');
+    print('⚠️  [Orvyna] Konfigürasyon dosyası bulunamadı: ${configFile.path}');
+    print('ℹ️  Varsayılan ayarlar korunacak.');
     return;
   }
 
-  print('ğŸ“„ KonfigÃ¼rasyon dosyasÄ± okunuyor: ${configFile.path}');
+  print('📄 Konfigürasyon dosyası okunuyor: ${configFile.path}');
   final String content = configFile.readAsStringSync(encoding: utf8);
   final Map<String, dynamic> config;
   try {
     config = json.decode(content) as Map<String, dynamic>;
   } catch (e) {
-    print('âŒ [Web2App] JSON ayrÄ±ÅŸtÄ±rma hatasÄ±: $e');
+    print('❌ [Orvyna] JSON ayrıştırma hatası: $e');
     throw FormatException('Invalid JSON in app_config: $e');
   }
 
@@ -75,8 +75,8 @@ void applyAppConfig({
       notifications['enabled'] == true ||
       config['push_notifications_enabled'] == true;
 
-  final String appName = appInfo['app_name']?.toString() ?? appInfo['name']?.toString() ?? 'Web2App';
-  final String packageName = appInfo['package_name']?.toString() ?? appInfo['package']?.toString() ?? 'com.web2app.app';
+  final String appName = appInfo['app_name']?.toString() ?? appInfo['name']?.toString() ?? 'Orvyna';
+  final String packageName = appInfo['package_name']?.toString() ?? appInfo['package']?.toString() ?? 'com.orvyna.app';
   final String appVersion = appInfo['app_version']?.toString() ?? '1.0.0';
   final int buildNumber = (appInfo['build_number'] as num?)?.toInt() ?? 1;
 
@@ -162,7 +162,7 @@ void applyAppConfig({
     );
   }
 
-  print('\nâœ… [Web2App] TÃ¼m yapÄ±landÄ±rmalar baÅŸarÄ±yla uygulandÄ±!\n');
+  print('\n✅ [Orvyna] Tüm yapılandırmalar başarıyla uygulandı!\n');
 }
 
 void main(List<String> args) {
@@ -250,12 +250,12 @@ void _applyAndroidConfig({
     if (manifestContent.contains('package="')) {
       manifestContent = manifestContent.replaceAll(
         RegExp(r'package="[^"]*"'),
-        'package="com.web2app.app"',
+        'package="com.orvyna.app"',
       );
     }
     manifestContent = manifestContent.replaceAll(
       RegExp(r'android:name="(?:\.|\w+(\.\w+)*\.)MainActivity"'),
-      'android:name="com.web2app.app.MainActivity"',
+      'android:name="com.orvyna.app.MainActivity"',
     );
 
     // TODO-05: AdMob Android Configuration
@@ -331,7 +331,7 @@ void _applyAndroidConfig({
     }
 
     manifestFile.writeAsStringSync(manifestContent, encoding: utf8);
-    print('  âœ“ AndroidManifest.xml gÃ¼ncellendi (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob=${isAdmobEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Biyometrik=${isBiometricEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Push=${isPushEnabled ? "AÃ§Ä±k" : "KapalÄ±"})');
+    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="com.orvyna.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   } else {
     manifestFile.parent.createSync(recursive: true);
     final permBuffer = StringBuffer();
@@ -350,14 +350,14 @@ void _applyAndroidConfig({
         : '';
 
     manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.web2app.app">
+    package="com.orvyna.app">
 ${permBuffer.toString().trimRight()}
     <application
         android:label="@string/app_name"
         android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name="com.web2app.app.MainActivity"
+            android:name="com.orvyna.app.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
@@ -375,7 +375,7 @@ $admobTag        <meta-data
     </application>
 </manifest>
 ''', encoding: utf8);
-    print('  âœ“ AndroidManifest.xml oluÅŸturuldu (android:label="@string/app_name", MainActivity="com.web2app.app.MainActivity", AdMob=${isAdmobEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Biyometrik=${isBiometricEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Push=${isPushEnabled ? "AÃ§Ä±k" : "KapalÄ±"})');
+    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="com.orvyna.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   }
 
   // 2. strings.xml
@@ -441,10 +441,10 @@ $admobTag        <meta-data
     );
     content = content.replaceAll(
       RegExp(r'namespace\s*=?\s*["\x27][^"\x27]+["\x27]'),
-      'namespace = "com.web2app.app"',
+      'namespace = "com.orvyna.app"',
     );
     appBuildGradle.writeAsStringSync(content, encoding: utf8);
-    print('  âœ“ android/app/build.gradle gÃ¼ncellendi (applicationId="$packageName", namespace="com.web2app.app")');
+    print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName", namespace="com.orvyna.app")');
   } else {
     appBuildGradle.parent.createSync(recursive: true);
     appBuildGradle.writeAsStringSync('''plugins {
@@ -460,7 +460,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.web2app.app"
+    namespace = "com.orvyna.app"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -941,7 +941,7 @@ ${iosExtras.toString().trimRight()}
 
       final appFile = File('${fastlaneDir.path}/Appfile');
       appFile.writeAsStringSync('''app_identifier("$packageName")
-apple_id("developer@web2app.local")
+apple_id("developer@orvyna.local")
 itc_team_id("$appStoreIssuerId")
 ''', encoding: utf8);
 

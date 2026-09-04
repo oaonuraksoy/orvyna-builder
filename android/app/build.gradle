@@ -29,7 +29,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.web2app.app"
+    namespace = "com.orvyna.app"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -43,7 +43,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.web2app.app"
+        applicationId = "com.orvyna.app"
         minSdk = 21
         targetSdk = 35
         versionCode = flutterVersionCode.toInteger()

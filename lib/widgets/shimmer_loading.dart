@@ -184,7 +184,7 @@ class ShimmerLoadingView extends StatelessWidget {
                     const SizedBox(height: 16.0),
                     // Uygulama Başlığı (Tam Ortalanmış & Şık Tipografi)
                     Text(
-                      appName.isNotEmpty ? appName : 'Web2App',
+                      appName.isNotEmpty ? appName : 'Orvyna',
                       textAlign: TextAlign.center,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,

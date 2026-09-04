@@ -113,8 +113,8 @@ void main() {
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
       final manifestContent = manifest.readAsStringSync(encoding: utf8);
       expect(manifestContent, contains('android:label="@string/app_name"'));
-      expect(manifestContent, contains('package="com.web2app.app"'));
-      expect(manifestContent, contains('android:name="com.web2app.app.MainActivity"'));
+      expect(manifestContent, contains('package="com.orvyna.app"'));
+      expect(manifestContent, contains('android:name="com.orvyna.app.MainActivity"'));
       expect(manifestContent, contains('com.google.android.gms.ads.APPLICATION_ID'));
       expect(manifestContent, contains('ca-app-pub-3940256099942544~3347511713'));
 
@@ -128,7 +128,7 @@ void main() {
       final buildGradle = File('${tempDir.path}/android/app/build.gradle');
       final gradleContent = buildGradle.readAsStringSync(encoding: utf8);
       expect(gradleContent, contains('applicationId = "com.mysuper.app"'));
-      expect(gradleContent, contains('namespace = "com.web2app.app"'));
+      expect(gradleContent, contains('namespace = "com.orvyna.app"'));
 
       // 3. Android Mipmap Icons & Adaptive Icon Verification
       final mipmapHdpi = File('${tempDir.path}/android/app/src/main/res/mipmap-hdpi/ic_launcher.png');
@@ -399,7 +399,7 @@ void main() {
       // Prepopulate android manifest and iOS plist with AdMob tags
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
       manifest.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.web2app.app">
+    package="com.orvyna.app">
     <application
         android:label="@string/app_name"
         android:name="\${applicationName}">

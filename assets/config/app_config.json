@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
   "app_info": {
-    "app_name": "Web2App",
-    "package_name": "com.web2app.app",
+    "app_name": "Orvyna",
+    "package_name": "com.orvyna.app",
     "web_url": "https://flutter.dev",
     "user_agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1",
     "app_version": "1.0.0",
@@ -175,7 +175,7 @@
     {
       "id": "about",
       "title": "Hakkımızda & Vizyonumuz",
-      "content": "# Hakkımızda\n\nWeb2App ile mobil deneyiminizi en üst seviyeye taşıyın.\n\n## Misyonumuz\n- Hızlı ve güvenilir yerel mobil deneyim sunmak\n- Sıfır gecikme ve sıfır layout kayması ile maksimum akıcılık\n- Güçlü çevrimdışı önbellek desteği\n\n> Kalite ve hız bizim önceliğimizdir.",
+      "content": "# Hakkımızda\n\nOrvyna ile mobil deneyiminizi en üst seviyeye taşıyın.\n\n## Misyonumuz\n- Hızlı ve güvenilir yerel mobil deneyim sunmak\n- Sıfır gecikme ve sıfır layout kayması ile maksimum akıcılık\n- Güçlü çevrimdışı önbellek desteği\n\n> Kalite ve hız bizim önceliğimizdir.",
       "layout": "document",
       "icon": "article",
       "show_in_navigation": true

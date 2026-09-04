@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:mobile_engine/models/app_config.dart';
-import 'package:mobile_engine/services/biometric_service.dart';
+import 'package:orvyna_engine/models/app_config.dart';
+import 'package:orvyna_engine/services/biometric_service.dart';
 
 void main() {
   group('BiometricService Unit Tests', () {

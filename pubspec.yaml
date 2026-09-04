@@ -1,5 +1,5 @@
-name: mobile_engine
-description: "High-performance configurable Web2App Mobile Runtime Engine"
+name: orvyna_engine
+description: "High-performance Orvyna Mobile Runtime Engine for Web-to-Native Apps"
 publish_to: 'none'
 version: 1.0.0+1
 

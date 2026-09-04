@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../models/app_config.dart';
 import '../services/adblock_service.dart';
+import '../services/biometric_service.dart';
 import '../services/deeplink_service.dart';
 import '../services/permission_service.dart';
 import 'shimmer_loading.dart';
@@ -475,7 +476,7 @@ class CustomWebViewState extends State<CustomWebView> {
     return confirmed ?? false;
   }
 
-  /// JS Köprüsü ve Native İletişim Kanalları (Web2App JS API)
+  /// JS Köprüsü ve Native İletişim Kanalları (Orvyna JS API)
   void _setupJavaScriptHandlers(InAppWebViewController controller) {
     // 1. Ana FlutterBridge İşleyicisi
     controller.addJavaScriptHandler(
@@ -512,77 +513,112 @@ class CustomWebViewState extends State<CustomWebView> {
             final url = data['url']?.toString() ?? '';
             debugPrint('[JSBridge - Share] Title: $title, Text: $text, Url: $url');
             return {'status': 'success', 'action': 'share'};
+          } else if (action == 'requestBiometrics') {
+            final reason = data['reason']?.toString();
+            try {
+              final bioService = BiometricService(config: widget.config.biometric);
+              final success = await bioService.authenticate(
+                context: mounted ? context : null,
+                customReason: reason,
+              );
+              return {'status': 'success', 'action': 'requestBiometrics', 'authenticated': success};
+            } catch (e) {
+              return {'status': 'error', 'action': 'requestBiometrics', 'error': e.toString()};
+            }
           }
         }
         return {'status': 'success', 'timestamp': DateTime.now().millisecondsSinceEpoch};
       },
     );
 
-    // 2. Özel 'Web2App' JS Handlerları (Doğrudan çağrılar için)
-    controller.addJavaScriptHandler(
-      handlerName: 'Web2App_logEvent',
-      callback: (args) {
-        final eventName = args.isNotEmpty ? args[0]?.toString() ?? 'web_event' : 'web_event';
-        final params = args.length > 1 ? args[1] : {};
-        debugPrint('[Web2App JS API] logEvent: $eventName -> $params');
-        return {'success': true, 'event': eventName};
-      },
-    );
+    // 2. Birincil 'Orvyna' JS Handlerları ve Geriye Dönük Uyumluluk için 'Web2App' Aliasları
+    final logEventHandler = (List<dynamic> args) {
+      final eventName = args.isNotEmpty ? args[0]?.toString() ?? 'web_event' : 'web_event';
+      final params = args.length > 1 ? args[1] : {};
+      debugPrint('[Orvyna JS API] logEvent: $eventName -> $params');
+      return {'success': true, 'event': eventName};
+    };
 
-    controller.addJavaScriptHandler(
-      handlerName: 'Web2App_setBadge',
-      callback: (args) {
-        final count = (args.isNotEmpty && args[0] is num) ? (args[0] as num).toInt() : 0;
-        debugPrint('[Web2App JS API] setBadge: $count');
-        return {'success': true, 'badgeCount': count};
-      },
-    );
+    final setBadgeHandler = (List<dynamic> args) {
+      final count = (args.isNotEmpty && args[0] is num) ? (args[0] as num).toInt() : 0;
+      debugPrint('[Orvyna JS API] setBadge: $count');
+      return {'success': true, 'badgeCount': count};
+    };
 
-    controller.addJavaScriptHandler(
-      handlerName: 'Web2App_requestReview',
-      callback: (args) {
-        debugPrint('[Web2App JS API] requestReview requested');
-        return {'success': true};
-      },
-    );
+    final requestReviewHandler = (List<dynamic> args) {
+      debugPrint('[Orvyna JS API] requestReview requested');
+      return {'success': true};
+    };
 
-    controller.addJavaScriptHandler(
-      handlerName: 'Web2App_share',
-      callback: (args) {
-        final shareData = args.isNotEmpty && args[0] is Map ? args[0] : {'text': args.toString()};
-        debugPrint('[Web2App JS API] share: $shareData');
-        return {'success': true, 'data': shareData};
-      },
-    );
+    final shareHandler = (List<dynamic> args) {
+      final shareData = args.isNotEmpty && args[0] is Map ? args[0] : {'text': args.toString()};
+      debugPrint('[Orvyna JS API] share: $shareData');
+      return {'success': true, 'data': shareData};
+    };
+
+    final requestBiometricsHandler = (List<dynamic> args) async {
+      final customReason = args.isNotEmpty ? args[0]?.toString() : null;
+      debugPrint('[Orvyna JS API] requestBiometrics requested: $customReason');
+      try {
+        final bioService = BiometricService(config: widget.config.biometric);
+        final success = await bioService.authenticate(
+          context: mounted ? context : null,
+          customReason: customReason,
+        );
+        return {'success': success, 'authenticated': success};
+      } catch (e) {
+        debugPrint('[Orvyna JS API] requestBiometrics error: $e');
+        return {'success': false, 'error': e.toString()};
+      }
+    };
+
+    // Orvyna_ Handlers
+    controller.addJavaScriptHandler(handlerName: 'Orvyna_logEvent', callback: logEventHandler);
+    controller.addJavaScriptHandler(handlerName: 'Orvyna_setBadge', callback: setBadgeHandler);
+    controller.addJavaScriptHandler(handlerName: 'Orvyna_requestReview', callback: requestReviewHandler);
+    controller.addJavaScriptHandler(handlerName: 'Orvyna_share', callback: shareHandler);
+    controller.addJavaScriptHandler(handlerName: 'Orvyna_requestBiometrics', callback: requestBiometricsHandler);
+
+    // Geriye Dönük Uyumluluk (Web2App_ Handler Aliasları)
+    controller.addJavaScriptHandler(handlerName: 'Web2App_logEvent', callback: logEventHandler);
+    controller.addJavaScriptHandler(handlerName: 'Web2App_setBadge', callback: setBadgeHandler);
+    controller.addJavaScriptHandler(handlerName: 'Web2App_requestReview', callback: requestReviewHandler);
+    controller.addJavaScriptHandler(handlerName: 'Web2App_share', callback: shareHandler);
+    controller.addJavaScriptHandler(handlerName: 'Web2App_requestBiometrics', callback: requestBiometricsHandler);
   }
 
   /// Kullanıcı tarafından tanımlanan özel CSS, JavaScript ve Viewport kurallarını sayfaya uygular
   Future<void> _injectCustomAssets(InAppWebViewController controller) async {
-    // 0. Web2App Client JS Helper SDK Enjeksiyonu
+    // 0. Orvyna & Web2App Client JS Helper SDK Enjeksiyonu
     const clientHelperJs = r'''
     (function() {
-      if (!window.Web2App) {
-        window.Web2App = {
+      function buildSdk(prefix) {
+        return {
           isNativeApp: true,
           platform: 'flutter',
           logEvent: function(eventName, params) {
             if (window.flutter_inappwebview) {
-              return window.flutter_inappwebview.callHandler('Web2App_logEvent', eventName, params || {});
+              return window.flutter_inappwebview.callHandler(prefix + '_logEvent', eventName, params || {});
             }
           },
           setBadge: function(count) {
             if (window.flutter_inappwebview) {
-              return window.flutter_inappwebview.callHandler('Web2App_setBadge', count);
+              return window.flutter_inappwebview.callHandler(prefix + '_setBadge', count);
             }
           },
           requestReview: function() {
             if (window.flutter_inappwebview) {
-              return window.flutter_inappwebview.callHandler('Web2App_requestReview');
+              return window.flutter_inappwebview.callHandler(prefix + '_requestReview');
             }
           },
           share: function(data) {
             if (window.flutter_inappwebview) {
-              return window.flutter_inappwebview.callHandler('Web2App_share', data);
+              return window.flutter_inappwebview.callHandler(prefix + '_share', data);
+            }
+          },
+          requestBiometrics: function(reason) {
+            if (window.flutter_inappwebview) {
+              return window.flutter_inappwebview.callHandler(prefix + '_requestBiometrics', reason);
             }
           },
           postMessage: function(action, payload) {
@@ -591,6 +627,13 @@ class CustomWebViewState extends State<CustomWebView> {
             }
           }
         };
+      }
+
+      if (!window.Orvyna) {
+        window.Orvyna = buildSdk('Orvyna');
+      }
+      if (!window.Web2App) {
+        window.Web2App = window.Orvyna;
       }
     })();
     ''';
@@ -616,10 +659,10 @@ class CustomWebViewState extends State<CustomWebView> {
         final css = widget.config.webviewSettings.customCss;
         final js = """
 (function() {
-  var style = document.getElementById('__web2app_custom_css');
+  var style = document.getElementById('__orvyna_custom_css') || document.getElementById('__web2app_custom_css');
   if (!style) {
     style = document.createElement('style');
-    style.id = '__web2app_custom_css';
+    style.id = '__orvyna_custom_css';
     var target = document.head || document.getElementsByTagName('head')[0] || document.documentElement || document.body;
     if (target) target.appendChild(style);
   }

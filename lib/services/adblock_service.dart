@@ -96,7 +96,7 @@ class AdBlockService {
       if (css.isNotEmpty) {
         final js = '''
           (function() {
-            var styleId = 'web2app-adblock-styles';
+            var styleId = 'orvyna-adblock-styles';
             var existingStyle = document.getElementById(styleId);
             if (!existingStyle) {
               var style = document.createElement('style');

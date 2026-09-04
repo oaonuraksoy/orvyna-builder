@@ -52,7 +52,7 @@ void main() async {
   );
   inAppReviewService.recordAppLaunch();
 
-  runApp(Web2AppEngineApp(
+  runApp(OrvynaEngineApp(
     config: config,
     adBlockService: adBlockService,
     deepLinkService: deepLinkService,
@@ -92,7 +92,7 @@ void _applySystemSettings(SystemSettingsConfig systemSettings) {
   }
 }
 
-class Web2AppEngineApp extends StatelessWidget {
+class OrvynaEngineApp extends StatelessWidget {
   final AppConfig config;
   final AdBlockService adBlockService;
   final DeepLinkService deepLinkService;
@@ -102,7 +102,7 @@ class Web2AppEngineApp extends StatelessWidget {
   final BiometricService biometricService;
   final InAppReviewService inAppReviewService;
 
-  const Web2AppEngineApp({
+  const OrvynaEngineApp({
     super.key,
     required this.config,
     required this.adBlockService,
@@ -130,7 +130,7 @@ class Web2AppEngineApp extends StatelessWidget {
     );
 
     return MaterialApp(
-      title: config.appInfo.appName.isNotEmpty ? config.appInfo.appName : 'Web2App',
+      title: config.appInfo.appName.isNotEmpty ? config.appInfo.appName : 'Orvyna',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -384,7 +384,7 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
                         Text(
                           widget.config.appInfo.appName.isNotEmpty
                               ? widget.config.appInfo.appName
-                              : 'Web2App',
+                              : 'Orvyna',
                           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17.0),
                         ),
                       ],
@@ -438,7 +438,7 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
                             Text(
                               widget.config.appInfo.appName.isNotEmpty
                                   ? widget.config.appInfo.appName
-                                  : 'Web2App',
+                                  : 'Orvyna',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18.0,
