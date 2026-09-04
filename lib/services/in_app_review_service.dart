@@ -59,7 +59,11 @@ class InAppReviewService {
   Future<bool> requestReview({
     BuildContext? context,
     String? storeUrl,
+    bool force = false,
   }) async {
+    if (!force && !shouldPromptReview()) {
+      return false;
+    }
     _hasPrompted = true;
     try {
       if (await _inAppReview.isAvailable()) {

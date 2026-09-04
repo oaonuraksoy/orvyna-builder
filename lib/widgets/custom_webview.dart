@@ -9,6 +9,7 @@ import '../models/app_config.dart';
 import '../services/adblock_service.dart';
 import '../services/biometric_service.dart';
 import '../services/deeplink_service.dart';
+import '../services/in_app_review_service.dart';
 import '../services/permission_service.dart';
 import 'shimmer_loading.dart';
 import 'offline_screen.dart';
@@ -173,8 +174,15 @@ class CustomWebViewState extends State<CustomWebView> {
           child: InAppWebView(
             initialUrlRequest: URLRequest(
               url: WebUri(initialUrl),
+              cachePolicy: widget.config.offlineScreenType == OfflineScreenType.cacheFirstFallback
+                  ? URLRequestCachePolicy.RETURN_CACHE_DATA_ELSE_LOAD
+                  : URLRequestCachePolicy.USE_PROTOCOL_CACHE_POLICY,
             ),
             initialSettings: InAppWebViewSettings(
+              cacheMode: widget.config.offlineScreenType == OfflineScreenType.cacheFirstFallback
+                  ? CacheMode.LOAD_CACHE_ELSE_NETWORK
+                  : CacheMode.LOAD_DEFAULT,
+              cacheEnabled: true,
               useShouldOverrideUrlLoading: true,
               useShouldInterceptRequest: widget.config.adblockSettings.enabled,
               mediaPlaybackRequiresUserGesture: false,
@@ -506,7 +514,15 @@ class CustomWebViewState extends State<CustomWebView> {
             return {'status': 'success', 'action': 'setBadge', 'count': count};
           } else if (action == 'requestReview') {
             debugPrint('[JSBridge - RequestReview] In-App Review tetiklendi');
-            return {'status': 'success', 'action': 'requestReview'};
+            final reviewService = InAppReviewService(
+              config: widget.config.inAppReview,
+              packageName: widget.config.general.packageName,
+            );
+            final triggered = await reviewService.requestReview(
+              context: mounted ? context : null,
+              force: true,
+            );
+            return {'status': 'success', 'action': 'requestReview', 'triggered': triggered};
           } else if (action == 'share') {
             final title = data['title']?.toString() ?? '';
             final text = data['text']?.toString() ?? '';
@@ -545,9 +561,17 @@ class CustomWebViewState extends State<CustomWebView> {
       return {'success': true, 'badgeCount': count};
     };
 
-    final requestReviewHandler = (List<dynamic> args) {
+    final requestReviewHandler = (List<dynamic> args) async {
       debugPrint('[Orvyna JS API] requestReview requested');
-      return {'success': true};
+      final reviewService = InAppReviewService(
+        config: widget.config.inAppReview,
+        packageName: widget.config.general.packageName,
+      );
+      final triggered = await reviewService.requestReview(
+        context: mounted ? context : null,
+        force: true,
+      );
+      return {'success': true, 'triggered': triggered};
     };
 
     final shareHandler = (List<dynamic> args) {

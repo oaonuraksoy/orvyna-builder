@@ -107,23 +107,23 @@ void applyAppConfig({
   final String appStoreKeyId = appStore['key_id']?.toString() ?? '';
   final String appStoreP8Base64 = appStore['p8_base64']?.toString() ?? '';
 
-  print('ğŸ“¦ Uygulama AdÄ±      : $appName');
-  print('ğŸ†” Paket KimliÄŸi     : $packageName');
-  print('ğŸ·ï¸  SÃ¼rÃ¼m              : v$appVersion+$buildNumber');
-  print('ğŸ“¢ AdMob              : ${isAdmobEnabled ? "Aktif ($admobAppId)" : "Devre DÄ±ÅŸÄ±"}');
-  print('ğŸ” Biyometrik Kilit   : ${isBiometricEnabled ? "Aktif" : "Devre DÄ±ÅŸÄ±"}');
-  print('ğŸ”” Push Bildirimleri  : ${isPushEnabled ? "Aktif" : "Devre DÄ±ÅŸÄ±"}');
-  print('ğŸ¨ Ä°kon KaynaÄŸÄ±      : ${iconUrl.isNotEmpty ? "URL ($iconUrl)" : (iconBase64.isNotEmpty ? "Base64 (${(iconBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (VarsayÄ±lan)")}');
-  print('âœ¨ Splash KaynaÄŸÄ±    : ${splashUrl.isNotEmpty ? "URL ($splashUrl)" : (splashBase64.isNotEmpty ? "Base64 (${(splashBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (VarsayÄ±lan)")}');
-  print('ğŸ”‘ Keystore          : ${keystoreBase64.isNotEmpty ? "Mevcut (${(keystoreBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Debug/Unsigned)"}');
-  print('ğŸ TestFlight p8     : ${appStoreP8Base64.isNotEmpty ? "Mevcut (Key: $appStoreKeyId)" : "Yok"}');
+  print('📦 Uygulama Adı      : $appName');
+  print('🆔 Paket Kimliği     : $packageName');
+  print('🏷️ Sürüm              : v$appVersion+$buildNumber');
+  print('📢 AdMob              : ${isAdmobEnabled ? "Aktif ($admobAppId)" : "Devre Dışı"}');
+  print('🔒 Biyometrik Kilit   : ${isBiometricEnabled ? "Aktif" : "Devre Dışı"}');
+  print('🔔 Push Bildirimleri  : ${isPushEnabled ? "Aktif" : "Devre Dışı"}');
+  print('🎨 İkon Kaynağı      : ${iconUrl.isNotEmpty ? "URL ($iconUrl)" : (iconBase64.isNotEmpty ? "Base64 (${(iconBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Varsayılan)")}');
+  print('✨ Splash Kaynağı    : ${splashUrl.isNotEmpty ? "URL ($splashUrl)" : (splashBase64.isNotEmpty ? "Base64 (${(splashBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Varsayılan)")}');
+  print('🔑 Keystore          : ${keystoreBase64.isNotEmpty ? "Mevcut (${(keystoreBase64.length / 1024).toStringAsFixed(1)} KB)" : "Yok (Debug/Unsigned)"}');
+  print('✈️ TestFlight p8     : ${appStoreP8Base64.isNotEmpty ? "Mevcut (Key: $appStoreKeyId)" : "Yok"}');
 
   final String androidRoot = '${workingDir.path}/android';
   final String iosRoot = '${workingDir.path}/ios';
 
   // 1. ANDROID UYGULAMALARI
   if (platform == 'all' || platform == 'android') {
-    print('\nğŸ¤– [Android] YapÄ±landÄ±rmalar uygulanÄ±yor ($androidRoot)...');
+    print('\n🤖 [Android] Yapılandırmalar uygulanıyor ($androidRoot)...');
     _applyAndroidConfig(
       androidRoot: androidRoot,
       appName: appName,
@@ -145,7 +145,7 @@ void applyAppConfig({
 
   // 2. IOS UYGULAMALARI
   if (platform == 'all' || platform == 'ios') {
-    print('\nğŸ [iOS] YapÄ±landÄ±rmalar uygulanÄ±yor ($iosRoot)...');
+    print('\n🍎 [iOS] Yapılandırmalar uygulanıyor ($iosRoot)...');
     _applyIosConfig(
       iosRoot: iosRoot,
       appName: appName,
@@ -177,24 +177,29 @@ void main(List<String> args) {
     }
   }
 
-  applyAppConfig(configPath: configPath, platform: platform);
+  try {
+    applyAppConfig(configPath: configPath, platform: platform);
+  } catch (e) {
+    stderr.writeln('❌ [FATAL] $e');
+    exit(1);
+  }
 }
 
-/// URL veya Base64 formatÄ±ndaki gÃ¶rsel verisini Uint8List / List<int> olarak dÃ¶ner
+/// URL veya Base64 formatındaki görsel verisini Uint8List / List<int> olarak döner
 List<int>? _fetchImageBytes({String? url, String? base64Str}) {
   if (url != null && url.trim().isNotEmpty && url.startsWith('http')) {
     try {
-      print('  ğŸŒ GÃ¶rsel URL\'den indiriliyor: $url');
+      print('  🌐 Görsel URL\'den indiriliyor: $url');
       final curlResult = Process.runSync('curl', ['-sL', '--fail', '--retry', '2', url.trim()], stdoutEncoding: null);
       if (curlResult.exitCode == 0 && curlResult.stdout is List<int> && (curlResult.stdout as List<int>).isNotEmpty) {
         final bytes = curlResult.stdout as List<int>;
-        print('  âœ“ GÃ¶rsel URL Ã¼zerinden baÅŸarÄ±yla indirildi (${(bytes.length / 1024).toStringAsFixed(1)} KB)');
+        print('  ✓ Görsel URL üzerinden başarıyla indirildi (${(bytes.length / 1024).toStringAsFixed(1)} KB)');
         return bytes;
       } else {
-        print('  âš ï¸ URL indirme baÅŸarÄ±sÄ±z (exitCode: ${curlResult.exitCode})');
+        print('  ⚠️  URL indirme başarısız (exitCode: ${curlResult.exitCode})');
       }
     } catch (e) {
-      print('  âš ï¸ URL indirme hatasÄ± ($url): $e');
+      print('  ⚠️  URL indirme hatası ($url): $e');
     }
   }
 
@@ -202,14 +207,14 @@ List<int>? _fetchImageBytes({String? url, String? base64Str}) {
     try {
       return base64Decode(base64Str.replaceAll(RegExp(r'\s+'), ''));
     } catch (e) {
-      print('  âš ï¸ Base64 decode hatasÄ±: $e');
+      print('  ⚠️  Base64 decode hatası: $e');
     }
   }
 
   return null;
 }
 
-/// GÃ¶rseli opak (ÅŸeffaflÄ±ktan arÄ±ndÄ±rÄ±lmÄ±ÅŸ) 3 kanallÄ± RGB PNG formatÄ±na dÃ¶nÃ¼ÅŸtÃ¼rÃ¼r (Apple App Store kuralÄ±)
+/// Görseli opak (şeffaflıktan arındırılmış) 3 kanallı RGB PNG formatına dönüştürür (Apple App Store kuralı)
 img.Image _makeOpaqueRgb(img.Image image) {
   final opaqueCanvas = img.Image(
     width: image.width,
@@ -221,7 +226,7 @@ img.Image _makeOpaqueRgb(img.Image image) {
   return opaqueCanvas;
 }
 
-/// Android Proje DosyalarÄ±nÄ± GÃ¼nceller
+/// Android Proje Dosyalarını Günceller
 void _applyAndroidConfig({
   required String androidRoot,
   required String appName,
@@ -386,7 +391,7 @@ $admobTag        <meta-data
     <string name="app_name">$appName</string>
 </resources>
 ''', encoding: utf8);
-  print('  âœ“ res/values/strings.xml gÃ¼ncellendi');
+  print('  ✓ res/values/strings.xml güncellendi');
 
   final stylesFile = File('$androidRoot/app/src/main/res/values/styles.xml');
   if (!stylesFile.existsSync()) {
@@ -401,7 +406,7 @@ $admobTag        <meta-data
     </style>
 </resources>
 ''', encoding: utf8);
-    print('  âœ“ res/values/styles.xml oluÅŸturuldu');
+    print('  ✓ res/values/styles.xml oluşturuldu');
   }
 
   final nightStylesFile = File('$androidRoot/app/src/main/res/values-night/styles.xml');
@@ -417,7 +422,7 @@ $admobTag        <meta-data
     </style>
 </resources>
 ''', encoding: utf8);
-    print('  âœ“ res/values-night/styles.xml oluÅŸturuldu');
+    print('  ✓ res/values-night/styles.xml oluşturuldu');
   }
 
   final launchBgFile = File('$androidRoot/app/src/main/res/drawable/launch_background.xml');
@@ -428,7 +433,7 @@ $admobTag        <meta-data
     <item android:drawable="@android:color/white" />
 </layer-list>
 ''', encoding: utf8);
-    print('  âœ“ res/drawable/launch_background.xml oluÅŸturuldu');
+    print('  ✓ res/drawable/launch_background.xml oluşturuldu');
   }
 
   // 3. android/app/build.gradle
@@ -505,17 +510,17 @@ flutter {
     source = "../.."
 }
 ''', encoding: utf8);
-    print('  âœ“ android/app/build.gradle oluÅŸturuldu');
+    print('  ✓ android/app/build.gradle oluşturuldu');
   }
 
-  // 4. Ä°kon DosyalarÄ± (URL / Base64 -> PNG -> Center Crop 1:1 -> Mipmap & Adaptive)
+  // 4. İkon Dosyaları (URL / Base64 -> PNG -> Center Crop 1:1 -> Mipmap & Adaptive)
   final resDir = Directory('$androidRoot/app/src/main/res');
   final iconBytes = _fetchImageBytes(url: iconUrl, base64Str: iconBase64);
   if (iconBytes != null && iconBytes.isNotEmpty) {
     try {
       final decodedImage = img.decodeImage(Uint8List.fromList(iconBytes));
       if (decodedImage != null) {
-        // Merkezden 1:1 kare kÄ±rp (Center Crop)
+        // Merkezden 1:1 kare kırp (Center Crop)
         final minSide = math.min(decodedImage.width, decodedImage.height);
         final cropX = (decodedImage.width - minSide) ~/ 2;
         final cropY = (decodedImage.height - minSide) ~/ 2;
@@ -527,7 +532,7 @@ flutter {
           height: minSide,
         );
 
-        // Standart Launcher Ä°konlarÄ±: 48, 72, 96, 144, 192 px
+        // Standart Launcher İkonları: 48, 72, 96, 144, 192 px
         const launcherSizes = {
           'mipmap-mdpi': 48,
           'mipmap-hdpi': 72,
@@ -536,7 +541,7 @@ flutter {
           'mipmap-xxxhdpi': 192,
         };
 
-        // Adaptive Foreground Ä°konlarÄ±: 108, 162, 216, 324, 432 px
+        // Adaptive Foreground İkonları: 108, 162, 216, 324, 432 px
         const foregroundSizes = {
           'mipmap-mdpi': 108,
           'mipmap-hdpi': 162,
@@ -584,20 +589,20 @@ flutter {
 </adaptive-icon>
 ''', encoding: utf8);
 
-        print('  âœ“ Android mipmap launcher ve adaptive foreground ikonlarÄ± (5 Ã§Ã¶zÃ¼nÃ¼rlÃ¼k) Cubic Antialiasing ile Ã¼retildi');
+        print('  ✓ Android mipmap launcher ve adaptive foreground ikonları (5 çözünürlük) Cubic Antialiasing ile üretildi');
       } else {
         _writeRawIconsFallback(resDir, Uint8List.fromList(iconBytes));
       }
     } catch (e) {
-      print('  âš ï¸ Ä°kon Ã§Ã¶zÃ¼lemedi: $e');
+      print('  ⚠️  İkon çözülemedi: $e');
       _ensureDefaultAndroidIcons(resDir);
     }
   } else {
     _ensureDefaultAndroidIcons(resDir);
-    print('  âœ“ Android mipmap varsayÄ±lan ikonlarÄ± kontrol edildi / Ã¼retildi');
+    print('  ✓ Android mipmap varsayılan ikonları kontrol edildi / üretildi');
   }
 
-  // 5. Splash GÃ¶rseli (URL / Base64)
+  // 5. Splash Görseli (URL / Base64)
   final splashBytes = _fetchImageBytes(url: splashUrl, base64Str: splashBase64);
   if (splashBytes != null && splashBytes.isNotEmpty) {
     try {
@@ -608,13 +613,13 @@ flutter {
       final splashXxhdpi = File('$androidRoot/app/src/main/res/drawable-xxhdpi/splash_logo.png');
       splashXxhdpi.parent.createSync(recursive: true);
       splashXxhdpi.writeAsBytesSync(splashBytes);
-      print('  âœ“ Android splash_logo.png oluÅŸturuldu');
+      print('  ✓ Android splash_logo.png oluşturuldu');
     } catch (e) {
-      print('  âš ï¸ Splash gÃ¶rseli yazÄ±lamadÄ±: $e');
+      print('  ⚠️  Splash görseli yazılamadı: $e');
     }
   }
 
-  // 6. Keystore & Ä°mzalama (Signing Key)
+  // 6. Keystore & İmzalama (Signing Key)
   final keyPropsFile = File('$androidRoot/key.properties');
   if (keystoreBase64.trim().isNotEmpty && keystorePassword.trim().isNotEmpty) {
     try {
@@ -636,23 +641,23 @@ keyPassword=$effectiveKeyPass
 keyAlias=$effectiveAlias
 storeFile=../upload.keystore
 ''', encoding: utf8);
-      print('  âœ“ upload.keystore ve key.properties baÅŸarÄ±yla oluÅŸturuldu ve baÄŸlandÄ± (Alias: $effectiveAlias)');
+      print('  ✓ upload.keystore ve key.properties başarıyla oluşturuldu ve bağlandı (Alias: $effectiveAlias)');
     } catch (e) {
-      print('  ❌ [HATA] Keystore Base64 çözülürken kritik hata oluştu: ');
-      print('  ℹ️ key.properties dosyasına dokunulmadı. Mevcut yapılandırma korunuyor.');
+      print('  ❌ [HATA] Keystore Base64 çözülürken kritik hata oluştu: $e');
+      throw FormatException('Keystore Base64 çözme hatası: $e');
     }
   } else {
-    // Keystore veya ÅŸifre girilmediyse key.properties silinmeli ki Gradle otomatik olarak debug signing kullansÄ±n ve APK derlemesi Ã‡Ã–KMESÄ°N.
+    // Keystore veya şifre girilmediyse key.properties silinmeli ki Gradle otomatik olarak debug signing kullansın ve APK derlemesi ÇÖKMESİN.
     if (keyPropsFile.existsSync()) {
       keyPropsFile.deleteSync();
-      print('  â„¹ï¸ Keystore veya ÅŸifre girilmediÄŸi iÃ§in key.properties kaldÄ±rÄ±ldÄ± (Debug signing kullanÄ±lacak)');
+      print('  ℹ️  Keystore veya şifre girilmediği için key.properties kaldırıldı (Debug signing kullanılacak)');
     } else {
-      print('  â„¹ï¸ Keystore veya ÅŸifre belirtilmedi (Debug signing kullanÄ±lacak)');
+      print('  ℹ️  Keystore veya şifre belirtilmedi (Debug signing kullanılacak)');
     }
   }
 }
 
-/// iOS Proje DosyalarÄ±nÄ± GÃ¼nceller
+/// iOS Proje Dosyalarını Günceller
 void _applyIosConfig({
   required String iosRoot,
   required String appName,
@@ -762,7 +767,7 @@ void _applyIosConfig({
     }
 
     infoPlistFile.writeAsStringSync(plistContent, encoding: utf8);
-    print('  âœ“ ios/Runner/Info.plist gÃ¼ncellendi (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Biyometrik=${isBiometricEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Push=${isPushEnabled ? "AÃ§Ä±k" : "KapalÄ±"})');
+    print('  ✓ ios/Runner/Info.plist güncellendi (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   } else {
     infoPlistFile.parent.createSync(recursive: true);
     final iosExtras = StringBuffer();
@@ -770,11 +775,11 @@ void _applyIosConfig({
       iosExtras.writeln('\t<key>GADApplicationIdentifier</key>');
       iosExtras.writeln('\t<string>$admobAppId</string>');
       iosExtras.writeln('\t<key>NSUserTrackingUsageDescription</key>');
-      iosExtras.writeln('\t<string>Size daha iyi bir reklam deneyimi sunabilmek iÃ§in izninize ihtiyaÃ§ duyulmaktadÄ±r.</string>');
+      iosExtras.writeln('\t<string>Size daha iyi bir reklam deneyimi sunabilmek için izninize ihtiyaç duyulmaktadır.</string>');
     }
     if (isBiometricEnabled) {
       iosExtras.writeln('\t<key>NSFaceIDUsageDescription</key>');
-      iosExtras.writeln('\t<string>Uygulamaya gÃ¼venli giriÅŸ yapmak iÃ§in biyometrik kimlik doÄŸrulama gereklidir.</string>');
+      iosExtras.writeln('\t<string>Uygulamaya güvenli giriş yapmak için biyometrik kimlik doğrulama gereklidir.</string>');
     }
     if (isPushEnabled) {
       iosExtras.writeln('\t<key>UIBackgroundModes</key>');
@@ -829,7 +834,7 @@ ${iosExtras.toString().trimRight()}
 </dict>
 </plist>
 ''', encoding: utf8);
-    print('  âœ“ ios/Runner/Info.plist oluÅŸturuldu (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Biyometrik=${isBiometricEnabled ? "AÃ§Ä±k" : "KapalÄ±"}, Push=${isPushEnabled ? "AÃ§Ä±k" : "KapalÄ±"})');
+    print('  ✓ ios/Runner/Info.plist oluşturuldu (CFBundleDisplayName="$appName", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   }
 
   // 2. project.pbxproj (PRODUCT_BUNDLE_IDENTIFIER)
@@ -841,7 +846,7 @@ ${iosExtras.toString().trimRight()}
       'PRODUCT_BUNDLE_IDENTIFIER = $packageName;',
     );
     pbxprojFile.writeAsStringSync(pbxContent, encoding: utf8);
-    print('  âœ“ ios/Runner.xcodeproj/project.pbxproj gÃ¼ncellendi (PRODUCT_BUNDLE_IDENTIFIER="$packageName")');
+    print('  ✓ ios/Runner.xcodeproj/project.pbxproj güncellendi (PRODUCT_BUNDLE_IDENTIFIER="$packageName")');
   } else {
     pbxprojFile.parent.createSync(recursive: true);
     pbxprojFile.writeAsStringSync('''// !\$*UTF8*\$!
@@ -869,10 +874,10 @@ ${iosExtras.toString().trimRight()}
 	rootObject = 97C146E61CF9000F007C117D;
 }
 ''', encoding: utf8);
-    print('  âœ“ ios/Runner.xcodeproj/project.pbxproj oluÅŸturuldu');
+    print('  ✓ ios/Runner.xcodeproj/project.pbxproj oluşturuldu');
   }
 
-  // 3. iOS Ä°kon VarlÄ±klarÄ± (URL / Base64 -> %100 OPAK RGB PNG -> AppIcon.appiconset)
+  // 3. iOS İkon Varlıkları (URL / Base64 -> %100 OPAK RGB PNG -> AppIcon.appiconset)
   final iconBytes = _fetchImageBytes(url: iconUrl, base64Str: iconBase64);
   if (iconBytes != null && iconBytes.isNotEmpty) {
     try {
@@ -920,13 +925,13 @@ ${iosExtras.toString().trimRight()}
   }
 }
 ''', encoding: utf8);
-      print('  âœ“ iOS AppIcon.appiconset 1024x1024 HD ikon varlÄ±klarÄ± Cubic Antialiasing ile Ã¼retildi');
+      print('  ✓ iOS AppIcon.appiconset 1024x1024 HD ikon varlıkları Cubic Antialiasing ile üretildi');
     } catch (e) {
-      print('  âš ï¸ iOS Ä°kon Ã§Ã¶zÃ¼lemedi: $e');
+      print('  ⚠️  iOS İkon çözülemedi: $e');
     }
   }
 
-  // 4. App Store Connect API AnahtarÄ± (.p8) ve Fastlane YapÄ±landÄ±rmasÄ±
+  // 4. App Store Connect API Anahtarı (.p8) ve Fastlane Yapılandırması
   if (appStoreP8Base64.isNotEmpty) {
     try {
       final p8Bytes = base64Decode(appStoreP8Base64.replaceAll(RegExp(r'\s+'), ''));
@@ -966,14 +971,14 @@ platform :ios do
   end
 end
 ''', encoding: utf8);
-      print('  âœ“ App Store Connect AuthKey (.p8), Appfile ve Fastfile TestFlight iÃ§in yapÄ±landÄ±rÄ±ldÄ±');
+      print('  ✓ App Store Connect AuthKey (.p8), Appfile ve Fastfile TestFlight için yapılandırıldı');
     } catch (e) {
-      print('  âš ï¸ App Store Connect p8 Base64 Ã§Ã¶zÃ¼lemedi: $e');
+      print('  ⚠️  App Store Connect p8 Base64 çözülemedi: $e');
     }
   }
 }
 
-/// Android mipmap ikonlarÄ±nÄ±n ve adaptive icon XML'inin varlÄ±ÄŸÄ±nÄ± garanti eder, yoksa varsayÄ±lan 1x1 PNG yazar
+/// Android mipmap ikonlarının ve adaptive icon XML'inin varlığını garanti eder, yoksa varsayılan 1x1 PNG yazar
 void _ensureDefaultAndroidIcons(Directory resDir) {
   const defaultPngBase64 =
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';

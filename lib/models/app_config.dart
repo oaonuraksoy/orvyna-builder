@@ -12,6 +12,8 @@ enum OfflineModeType {
   const OfflineModeType(this.label);
 }
 
+typedef OfflineScreenType = OfflineModeType;
+
 /// Custom Page 3 Farklı Layout Şablonu
 enum CustomPageLayout {
   document('Belge / Tipografik Makale'),
@@ -180,6 +182,9 @@ class AppConfig {
     this.signing = const SigningConfig.defaultConfig(),
     this.appStoreConnect = const AppStoreConnectConfig.defaultConfig(),
   });
+
+  AppInfoConfig get general => appInfo;
+  OfflineModeType get offlineScreenType => offlineSettings.offlineModeType;
 
   factory AppConfig.fromJson(Map<String, dynamic> json) {
     return AppConfig(
