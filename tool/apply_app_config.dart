@@ -263,7 +263,7 @@ void _applyAndroidConfig({
       'android:name="com.orvyna.app.MainActivity"',
     );
 
-    // TODO-05: AdMob Android Configuration
+    // AdMob Android Yapılandırması (APPLICATION_ID Meta-Data Entegrasyonu)
     final admobRegex = RegExp(
       r'\s*<meta-data\s+[^>]*android:name="com\.google\.android\.gms\.ads\.APPLICATION_ID"[^>]*\/?>',
       caseSensitive: false,
@@ -286,7 +286,7 @@ void _applyAndroidConfig({
       manifestContent = manifestContent.replaceAll(admobRegex, '');
     }
 
-    // TODO-06: Biyometrik Kilit Android Permissions (USE_BIOMETRIC & USE_FINGERPRINT)
+    // Biyometrik Kimlik Doğrulama Android İzinleri (USE_BIOMETRIC & USE_FINGERPRINT)
     final biometricRegex = RegExp(
       r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.USE_BIOMETRIC"[^>]*\/?>',
       caseSensitive: false,
@@ -317,7 +317,7 @@ void _applyAndroidConfig({
       manifestContent = manifestContent.replaceAll(fingerprintRegex, '');
     }
 
-    // TODO-07: Push Bildirim Android Permission (POST_NOTIFICATIONS)
+    // Push Bildirim Android İzinleri (POST_NOTIFICATIONS)
     final postNotifRegex = RegExp(
       r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.POST_NOTIFICATIONS"[^>]*\/?>',
       caseSensitive: false,
@@ -685,7 +685,7 @@ void _applyIosConfig({
       '<key>CFBundleName</key>\n\t<string>$appName</string>',
     );
 
-    // TODO-05: AdMob iOS (GADApplicationIdentifier, SKAdNetworkItems, NSUserTrackingUsageDescription)
+    // AdMob iOS Yapılandırması (GADApplicationIdentifier, SKAdNetworkItems, NSUserTrackingUsageDescription)
     if (isAdmobEnabled) {
       if (plistContent.contains('<key>GADApplicationIdentifier</key>')) {
         plistContent = plistContent.replaceAll(
@@ -720,7 +720,7 @@ void _applyIosConfig({
       );
     }
 
-    // TODO-06: Biyometrik Kilit iOS (NSFaceIDUsageDescription)
+    // Biyometrik Kimlik Doğrulama iOS İzinleri (NSFaceIDUsageDescription)
     if (isBiometricEnabled) {
       if (plistContent.contains('<key>NSFaceIDUsageDescription</key>')) {
         plistContent = plistContent.replaceAll(
@@ -740,7 +740,7 @@ void _applyIosConfig({
       );
     }
 
-    // TODO-07: Push Bildirim iOS (UIBackgroundModes -> remote-notification)
+    // Push Bildirim iOS Yapılandırması (UIBackgroundModes -> remote-notification)
     if (isPushEnabled) {
       if (plistContent.contains('<key>UIBackgroundModes</key>')) {
         if (!plistContent.contains('<string>remote-notification</string>')) {

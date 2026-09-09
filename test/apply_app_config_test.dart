@@ -395,7 +395,7 @@ void main() {
       expect(existingKeyProps.existsSync(), isFalse);
     });
 
-    test('TODO-05: applyAppConfig cleans AdMob meta-data and Info.plist keys when admob_enabled is false', () {
+    test('applyAppConfig: cleans AdMob meta-data and Info.plist keys when admob_enabled is false', () {
       // Prepopulate android manifest and iOS plist with AdMob tags
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
       manifest.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
@@ -451,7 +451,7 @@ void main() {
       expect(updatedPlist.contains('NSUserTrackingUsageDescription'), isFalse);
     });
 
-    test('TODO-06: applyAppConfig adds and removes biometric permissions in AndroidManifest.xml and Info.plist', () {
+    test('applyAppConfig: adds and removes biometric permissions in AndroidManifest.xml and Info.plist', () {
       // 1. Test ENABLED
       final configMapEnabled = {
         'version': '1.0.0',
@@ -500,7 +500,7 @@ void main() {
       expect(disabledPlist.contains('NSFaceIDUsageDescription'), isFalse);
     });
 
-    test('TODO-07: applyAppConfig adds and removes push notification permissions in Android and iOS', () {
+    test('applyAppConfig: adds and removes push notification permissions in Android and iOS', () {
       // 1. Test ENABLED
       final configMapEnabled = {
         'version': '1.0.0',
