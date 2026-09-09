@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gizlilik Politikası (Privacy Policy) — Orvyna</title>
+  <meta name="description" content="Orvyna App Studio Pro ve Orvyna Mobile Runtime gizlilik politikası, veri işleme ilkeleri, GDPR ve KVKK standartları.">
+  <link rel="canonical" href="https://orvyna.tr/privacy.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0B0F19;
+      --bg-surface: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(99, 102, 241, 0.3);
+      --primary: #4F46E5;
+      --primary-light: #6366F1;
+      --accent-cyan: #06B6D4;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-dim: #6B7280;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.7;
+      background-image: radial-gradient(circle at 15% 10%, rgba(79, 70, 229, 0.12) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+    a { color: var(--primary-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+    /* Navbar */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(11, 15, 25, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      height: 76px; display: flex; align-items: center;
+    }
+    .nav-container { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: #fff; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-muted); font-size: 15px; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+
+    /* Content Area */
+    .policy-content { padding: 60px 0 100px; }
+    .doc-header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+    .badge {
+      display: inline-block; padding: 4px 12px;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 999px; font-size: 12px; font-weight: 600;
+      color: #A5B4FC; margin-bottom: 16px;
+    }
+    h1 { font-size: 34px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .meta-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .meta-box p { margin-bottom: 6px; }
+    .meta-box p:last-child { margin-bottom: 0; }
+    .meta-box strong { color: var(--text-main); }
+
+    h2 { font-size: 22px; font-weight: 700; margin: 36px 0 14px; color: #fff; border-left: 3px solid var(--primary); padding-left: 12px; }
+    h3 { font-size: 17px; font-weight: 600; margin: 24px 0 10px; color: #E5E7EB; }
+    p { margin-bottom: 16px; color: var(--text-muted); font-size: 15px; }
+    ul, ol { margin-bottom: 20px; padding-left: 24px; color: var(--text-muted); font-size: 15px; }
+    li { margin-bottom: 8px; }
+    strong { color: var(--text-main); }
+
+    .callout {
+      background: rgba(99, 102, 241, 0.08);
+      border-left: 4px solid var(--primary-light);
+      padding: 16px 20px;
+      border-radius: 0 10px 10px 0;
+      margin: 24px 0;
+      font-size: 14px;
+      color: #CBD5E1;
+    }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 0; background: rgba(11, 15, 25, 0.95);
+    }
+    .footer-container {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { color: var(--text-muted); font-size: 14px; }
+    .footer-links a:hover { color: var(--text-main); }
+    .copy { color: var(--text-dim); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      h1 { font-size: 26px; }
+      .footer-container { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span>Orvyna</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="privacy.html" class="active">Gizlilik Politikası</a></li>
+        <li><a href="terms.html">Kullanım Koşulları</a></li>
+        <li><a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <a href="mailto:dev@onuraksoy.com.tr" style="color: var(--text-muted); font-size:14px;">Destek</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="policy-content">
+    <div class="container">
+      <div class="doc-header">
+        <span class="badge">GDPR, KVKK & Apple Guideline 5.1 Uyumlu</span>
+        <h1>Gizlilik Politikası (Privacy Policy)</h1>
+        <div class="meta-box">
+          <p><strong>Yürürlük Tarihi:</strong> 9 Eylül 2026</p>
+          <p><strong>Son Güncelleme:</strong> 9 Eylül 2026</p>
+          <p><strong>Veri Sorumlusu:</strong> Onur Aksoy / Orvyna</p>
+          <p><strong>Resmi Alan Adı:</strong> <a href="https://orvyna.tr">https://orvyna.tr</a></p>
+          <p><strong>Resmi İletişim E-Postası:</strong> <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a></p>
+        </div>
+      </div>
+
+      <h2>1. Giriş ve Kapsam</h2>
+      <p>
+        Bu Gizlilik Politikası, <strong>Orvyna</strong> ("biz", "bizim" veya "Veri Sorumlusu") tarafından sunulan <strong>Orvyna App Studio Pro</strong> (macOS, Windows, Linux masaüstü yazılımı) ve <strong>Orvyna Mobile Runtime & Engine</strong> (iOS ve Android mobil çekirdeği) ile ilişkili web siteleri (<a href="https://orvyna.tr">https://orvyna.tr</a>) ve servislerin kişisel verileri nasıl topladığını, işlediğini ve koruduğunu açıklamaktadır.
+      </p>
+      <p>
+        Orvyna ekosistemi, <strong>tasarımdan itibaren gizlilik (privacy-by-design)</strong> ve <strong>yerel odaklı (local-first)</strong> mimari prensipleriyle inşa edilmiştir. Kişisel verileriniz hiçbir şekilde üçüncü şahıslara veya veri simsarlarına satılmaz, kiralanmaz ve izinsiz paylaşılmaz.
+      </p>
+
+      <h2>2. Veri Sorumlusu Kimliği</h2>
+      <p>6698 Sayılı KVKK, Avrupa Birliği GDPR ve ilgili uluslararası mevzuat çerçevesinde:</p>
+      <ul>
+        <li><strong>Veri Sorumlusu:</strong> Onur Aksoy / Orvyna</li>
+        <li><strong>Web Sitesi:</strong> <a href="https://orvyna.tr">https://orvyna.tr</a></li>
+        <li><strong>Resmi İletişim:</strong> <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a></li>
+        <li><strong>Açık Kaynak Kod & Derleme Portalı:</strong> <a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">https://github.com/oaonuraksoy/orvyna-builder</a></li>
+      </ul>
+
+      <h2>3. Temel Gizlilik İlkeleri ve Yerel Odaklı Mimari</h2>
+      <ol>
+        <li><strong>Verinin Cihazınızda Kalması:</strong> Yapılandırdığınız web sarmalama ayarları, proje kaynak kodları, görsel varlıklar, Android Keystore anahtarları ve iOS sertifikaları doğrudan kendi yerel diskinizde işlenir ve saklanır.</li>
+        <li><strong>Sıfır Veri Satışı:</strong> Kişisel bilgileriniz veya uygulama analitikleriniz reklam verenlere veya harici şirketlere asla devredilmez.</li>
+        <li><strong>Minimum Veri İşleme:</strong> Yalnızca uygulamanın temel işlevlerini yerine getirmek ve talep ettiğiniz bulut derleme süreçlerini yürütmek için zorunlu olan asgari veri işlenir.</li>
+        <li><strong>Şeffaf Donanım İzinleri:</strong> Mobil motorda kamera, konum, mikrofon ve depolama gibi hassas donanım yeteneklerine kullanıcı açık onay vermeden erişilemez.</li>
+      </ol>
+
+      <div class="callout">
+        <strong>Önemli Güvenlik Garantisi:</strong> Biyometrik kimlik doğrulama (Face ID, Touch ID, Android BiometricPrompt) verileriniz doğrudan donanımsal Güvenli Enclave (Secure Enclave / KeyStore) içerisinde yerel olarak işlenir. Biyometrik ham veriler hiçbir koşulda sunucularımıza aktarılmaz.
+      </div>
+
+      <h2>4. İşlenen ve İşlenmeyen Veriler</h2>
+      <h3>4.1. Cihazınızda Kalan Veriler</h3>
+      <p>Masaüstü stüdyoda yönettiğiniz proje profilleri, web önbellekleri, özel CSS/JS enjeksiyonları ve imzalama sertifikaları harici sunuculara iletilmez.</p>
+
+      <h3>4.2. Operasyonel ve Destek Verileri</h3>
+      <p>Destek talepleriniz için <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a> adresine e-posta gönderdiğinizde ilettiğiniz iletişim detayları, yalnızca sorununuzu çözüme kavuşturmak amacıyla güvenli posta sunucularımızda saklanır.</p>
+
+      <h3>4.3. Kesinlikle Toplanmayan Veriler</h3>
+      <ul>
+        <li>Kredi kartı veya finansal ödeme detayları (tüm satın alımlar Apple StoreKit 2 veya Microsoft Store altyapısı üzerinden güvenle gerçekleştirilir).</li>
+        <li>Klavye basış kayıtları (keylogging) veya ekran görüntüleri.</li>
+        <li>Webview içinde gezilen harici web sitelerinin geçmişi veya form bilgileri.</li>
+      </ul>
+
+      <h2>5. Apple App Store & Google Play Uyumluluğu</h2>
+      <p>
+        Orvyna Mobile Runtime motoru, Apple App Store İnceleme Kılavuzları (Özellikle Kılavuz 5.1 — Veri Güvenliği ve Gizliliği) ve Google Play Geliştirici Politikaları ile tam uyumlu olarak tasarlanmıştır. Uygulamanız yalnızca açık izin verilen API'leri çağırır.
+      </p>
+
+      <h2>6. Kullanıcı Hakları (KVKK & GDPR)</h2>
+      <p>Kişisel verilerinizle ilgili olarak:</p>
+      <ul>
+        <li>Verilerinizin işlenip işlenmediğini öğrenme,</li>
+        <li>İşlenmişse bilgi talep etme ve kopyasını isteme,</li>
+        <li>Eksik veya yanlış işlenen verilerin düzeltilmesini isteme,</li>
+        <li>Mevzuat şartları çerçevesinde silinmesini veya yok edilmesini talep etme haklarına sahipsiniz.</li>
+      </ul>
+      <p>
+        Haklarınızı kullanmak için taleplerinizi <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a> adresine iletebilirsiniz. Başvurularınız en geç 30 gün içerisinde yasalara uygun olarak sonuçlandırılır.
+      </p>
+
+      <h2>7. İletişim</h2>
+      <p>Gizlilik politikamıza dair tüm sorularınız için:</p>
+      <ul>
+        <li><strong>E-Posta:</strong> <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a></li>
+        <li><strong>Resmi Alan Adı:</strong> <a href="https://orvyna.tr">https://orvyna.tr</a></li>
+        <li><strong>Genel Repo:</strong> <a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">oaonuraksoy/orvyna-builder</a></li>
+      </ul>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="brand">
+        <div class="brand-icon" style="width:28px;height:28px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span style="font-size:16px;">Orvyna</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+        <li><a href="terms.html">Kullanım Koşulları</a></li>
+        <li><a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <p class="copy">© 2026 Orvyna. Tüm hakları saklıdır. İletişim: dev@onuraksoy.com.tr</p>
+    </div>
+  </footer>
+
+</body>
+</html>

@@ -3,7 +3,8 @@
 **Effective Date / Yürürlük Tarihi:** September 9, 2026  
 **Last Updated / Son Güncelleme:** September 9, 2026  
 **Developer & Data Controller / Geliştirici ve Veri Sorumlusu:** Onur Aksoy / Orvyna  
-**Official Inquiries / Resmi İletişim:** [support@orvyna.com](mailto:support@orvyna.com) | [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com)  
+**Official Website / Resmi Web Sitesi:** [https://orvyna.tr](https://orvyna.tr)  
+**Official Inquiries / Resmi İletişim:** [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr)  
 
 ---
 
@@ -20,7 +21,7 @@
 This Privacy Policy outlines how **Orvyna** ("we", "our", or "us"), operated by Onur Aksoy, collects, uses, protects, and discloses information in connection with:
 - **Orvyna App Studio** (desktop application for macOS, Windows, and Linux),
 - **Orvyna Mobile Runtime & Engine** (the cross-platform Flutter/native execution engine for iOS and Android),
-- Related services, websites, and cloud build relay infrastructure maintained under the Orvyna project.
+- Related services, websites ([https://orvyna.tr](https://orvyna.tr)), and cloud build relay infrastructure maintained under the Orvyna project.
 
 We respect your privacy and are committed to protecting it through transparent policies. We design our software around a strict **local-first, privacy-by-design** paradigm. We do not sell, rent, or monetize your personal information or application assets.
 
@@ -29,7 +30,8 @@ We respect your privacy and are committed to protecting it through transparent p
 ## 2. Data Controller Information
 Under the European Union General Data Protection Regulation (GDPR), the UK GDPR, and California Consumer Privacy Act (CCPA):
 - **Data Controller:** Onur Aksoy / Orvyna
-- **Contact Email:** [support@orvyna.com](mailto:support@orvyna.com) / [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com)
+- **Website:** [https://orvyna.tr](https://orvyna.tr)
+- **Contact Email:** [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr)
 - **Applicability:** Applies globally to users across Apple App Store, Google Play Store, Microsoft Store, and direct download distribution channels.
 
 ---
@@ -155,9 +157,9 @@ We may update this Privacy Policy periodically to reflect technological changes,
 ## 12. Contact and Inquiries
 For questions regarding this Privacy Policy, or to exercise your GDPR/CCPA rights:
 - **Contact:** Onur Aksoy / Orvyna
-- **Email:** [support@orvyna.com](mailto:support@orvyna.com)
-- **Alternative Email:** [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com)
-- **GitHub Repository:** [https://github.com/oaonuraksoy/web2appflutter](https://github.com/oaonuraksoy/web2appflutter) / [https://github.com/oaonuraksoy/orvyna-builder](https://github.com/oaonuraksoy/orvyna-builder)
+- **Website:** [https://orvyna.tr](https://orvyna.tr)
+- **Email:** [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr)
+- **GitHub Repository:** [https://github.com/oaonuraksoy/orvyna-builder](https://github.com/oaonuraksoy/orvyna-builder)
 
 ---
 ---
@@ -169,7 +171,7 @@ For questions regarding this Privacy Policy, or to exercise your GDPR/CCPA right
 Bu Gizlilik Politikası, Onur Aksoy / **Orvyna** ("biz", "bizim" veya "Veri Sorumlusu") tarafından geliştirilen:
 - **Orvyna App Studio** (macOS, Windows ve Linux masaüstü stüdyo uygulaması),
 - **Orvyna Mobile Runtime & Engine** (iOS ve Android çapraz platform mobil çalıştırma motoru),
-- Orvyna bünyesindeki ilgili lisans doğrulama servisleri ve bulut derleme altyapısının kişisel verileri nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklamaktadır.
+- Orvyna bünyesindeki web siteleri ([https://orvyna.tr](https://orvyna.tr)), ilgili lisans doğrulama servisleri ve bulut derleme altyapısının kişisel verileri nasıl topladığını, kullandığını, sakladığını ve koruduğunu açıklamaktadır.
 
 Gizliliğinize en üst düzeyde saygı gösterilmektedir. Yazılımlarımız **yerel odaklı (local-first)** ve **tasarımdan itibaren gizlilik (privacy-by-design)** ilkeleriyle inşa edilmiştir. Kişisel verileriniz hiçbir koşulda üçüncü taraflara satılmaz, kiralanmaz veya ticari amaçla devredilmez.
 
@@ -178,7 +180,8 @@ Gizliliğinize en üst düzeyde saygı gösterilmektedir. Yazılımlarımız **y
 ## 2. Veri Sorumlusu Bilgisi
 6698 Sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") ve ilgili mevzuat uyarınca:
 - **Veri Sorumlusu:** Onur Aksoy / Orvyna
-- **İletişim E-Posta:** [support@orvyna.com](mailto:support@orvyna.com) / [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com)
+- **Web Sitesi:** [https://orvyna.tr](https://orvyna.tr)
+- **İletişim E-Posta:** [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr)
 - **Uygulanabilirlik:** Apple App Store, Google Play Store, Microsoft Store ve doğrudan dağıtım kanalları aracılığıyla Orvyna ürünlerini kullanan tüm kullanıcılar için geçerlidir.
 
 ---
@@ -266,7 +269,7 @@ Kullanıcı veya proje yapılandırmasına bağlı olarak aşağıdaki servisler
 8. İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,
 9. Kişisel verilerin kanuna aykırı olarak işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme.
 
-Başvurularınızı [support@orvyna.com](mailto:support@orvyna.com) veya [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com) adresine iletebilirsiniz. Başvurularınız en geç 30 gün içinde yasal mevzuata uygun şekilde yanıtlanacaktır.
+Başvurularınızı [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr) adresine iletebilirsiniz. Başvurularınız en geç 30 gün içinde yasal mevzuata uygun şekilde yanıtlanacaktır.
 
 ---
 
@@ -289,6 +292,6 @@ Mevzuattaki değişiklikler veya ürün geliştirmeleri nedeniyle bu Gizlilik Po
 ## 12. İletişim
 Gizlilik politikamız veya kişisel verilerinizle ilgili her türlü soru, görüş ve hak talepleriniz için bizimle iletişime geçebilirsiniz:
 - **Veri Sorumlusu:** Onur Aksoy / Orvyna
-- **E-Posta:** [support@orvyna.com](mailto:support@orvyna.com)
-- **Alternatif E-Posta:** [oaonuraksoy@gmail.com](mailto:oaonuraksoy@gmail.com)
-- **Geliştirici Portalı:** [https://github.com/oaonuraksoy](https://github.com/oaonuraksoy)
+- **Web Sitesi:** [https://orvyna.tr](https://orvyna.tr)
+- **E-Posta:** [dev@onuraksoy.com.tr](mailto:dev@onuraksoy.com.tr)
+- **Açık Kaynak Dağıtım:** [https://github.com/oaonuraksoy/orvyna-builder](https://github.com/oaonuraksoy/orvyna-builder)

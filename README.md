@@ -1,6 +1,6 @@
 # 🚀 Orvyna Builder Engine
 
-**Orvyna Builder Engine**, [Orvyna App Studio Pro](https://github.com/oaonuraksoy/web2appflutter) masaüstü stüdyosu tarafından yapılandırılan web uygulamalarını yüksek performanslı native Android ve iOS paketlerine dönüştüren resmi bulut ve yerel derleme çekirdeğidir.
+**Orvyna Builder Engine**, [Orvyna App Studio Pro](https://orvyna.tr) masaüstü stüdyosu tarafından yapılandırılan web uygulamalarını yüksek performanslı native Android ve iOS paketlerine dönüştüren resmi bulut ve yerel derleme çekirdeğidir.
 
 Bu depo, Orvyna kullanıcılarının kendi GitHub Actions kotaları üzerinden bağımsız, güvenli ve otomatik mobil derleme (CI/CD) alabilmeleri için tasarlanmıştır.
 

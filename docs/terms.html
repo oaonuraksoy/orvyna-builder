@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kullanım Koşulları (Terms of Service) — Orvyna</title>
+  <meta name="description" content="Orvyna App Studio Pro ve Orvyna Builder kullanım koşulları, lisans şartları ve yasal sorumluluklar.">
+  <link rel="canonical" href="https://orvyna.tr/terms.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-main: #0B0F19;
+      --bg-surface: #111827;
+      --bg-card: rgba(17, 24, 39, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-highlight: rgba(99, 102, 241, 0.3);
+      --primary: #4F46E5;
+      --primary-light: #6366F1;
+      --accent-cyan: #06B6D4;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-dim: #6B7280;
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.7;
+      background-image: radial-gradient(circle at 85% 10%, rgba(6, 182, 212, 0.12) 0%, transparent 40%);
+      background-attachment: fixed;
+    }
+    a { color: var(--primary-light); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+    /* Navbar */
+    .navbar {
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      background: rgba(11, 15, 25, 0.85);
+      border-bottom: 1px solid var(--border-color);
+      height: 76px; display: flex; align-items: center;
+    }
+    .nav-container { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; color: #fff; }
+    .brand-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--accent-cyan));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .nav-links { display: flex; align-items: center; gap: 24px; list-style: none; }
+    .nav-links a { color: var(--text-muted); font-size: 15px; font-weight: 500; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text-main); }
+
+    /* Content */
+    .policy-content { padding: 60px 0 100px; }
+    .doc-header { margin-bottom: 40px; padding-bottom: 24px; border-bottom: 1px solid var(--border-color); }
+    .badge {
+      display: inline-block; padding: 4px 12px;
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      border-radius: 999px; font-size: 12px; font-weight: 600;
+      color: #67E8F9; margin-bottom: 16px;
+    }
+    h1 { font-size: 34px; font-weight: 800; margin-bottom: 16px; letter-spacing: -0.5px; }
+    .meta-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .meta-box p { margin-bottom: 6px; }
+    .meta-box p:last-child { margin-bottom: 0; }
+    .meta-box strong { color: var(--text-main); }
+
+    h2 { font-size: 22px; font-weight: 700; margin: 36px 0 14px; color: #fff; border-left: 3px solid var(--accent-cyan); padding-left: 12px; }
+    p { margin-bottom: 16px; color: var(--text-muted); font-size: 15px; }
+    ul, ol { margin-bottom: 20px; padding-left: 24px; color: var(--text-muted); font-size: 15px; }
+    li { margin-bottom: 8px; }
+    strong { color: var(--text-main); }
+
+    footer {
+      border-top: 1px solid var(--border-color);
+      padding: 40px 0; background: rgba(11, 15, 25, 0.95);
+    }
+    .footer-container {
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 20px; max-width: 1200px; margin: 0 auto; padding: 0 24px;
+    }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { color: var(--text-muted); font-size: 14px; }
+    .footer-links a:hover { color: var(--text-main); }
+    .copy { color: var(--text-dim); font-size: 13px; }
+
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      h1 { font-size: 26px; }
+      .footer-container { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navbar -->
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="index.html" class="brand">
+        <div class="brand-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span>Orvyna</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+        <li><a href="terms.html" class="active">Kullanım Koşulları</a></li>
+        <li><a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <a href="mailto:dev@onuraksoy.com.tr" style="color: var(--text-muted); font-size:14px;">Destek</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="policy-content">
+    <div class="container">
+      <div class="doc-header">
+        <span class="badge">Yasal Sözleşme</span>
+        <h1>Kullanım Koşulları (Terms of Service)</h1>
+        <div class="meta-box">
+          <p><strong>Yürürlük Tarihi:</strong> 9 Eylül 2026</p>
+          <p><strong>Geliştirici & Hizmet Sağlayıcı:</strong> Onur Aksoy / Orvyna</p>
+          <p><strong>Resmi Web Alan Adı:</strong> <a href="https://orvyna.tr">https://orvyna.tr</a></p>
+          <p><strong>İletişim:</strong> <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a></p>
+        </div>
+      </div>
+
+      <h2>1. Şartların Kabulü</h2>
+      <p>
+        Orvyna App Studio Pro ve Orvyna Mobile Runtime yazılımlarını ("Yazılım") indirerek, kurarak veya kullanarak bu Kullanım Koşullarını kabul etmiş sayılırsınız. Bu şartları kabul etmiyorsanız lütfen yazılımı kullanmayınız.
+      </p>
+
+      <h2>2. Lisans ve Kullanım Hakları</h2>
+      <p>
+        Orvyna yazılımı, seçtiğiniz lisans modeli (Ücretsiz veya Pro/Ticari Lisans) çerçevesinde tarafınıza devredilemez, münhasır olmayan bir kullanım hakkı sağlar:
+      </p>
+      <ul>
+        <li><strong>Kişisel / Ücretsiz Kullanım:</strong> Bireysel projelerinizi test etmek ve ilk uygulamanızı derlemek için ücretsiz lisans haklarından yararlanabilirsiniz.</li>
+        <li><strong>Ticari / Pro Lisans:</strong> Pro sürüm, kurumsal projelerin sınırsız bulut derleme, gelişmiş varlık üretimi ve ticari yayın haklarıyla derlenmesini sağlar.</li>
+      </ul>
+
+      <h2>3. Kullanıcı Yükümlülükleri ve Fikri Mülkiyet</h2>
+      <p>
+        Orvyna Studio aracılığıyla mobil uygulamaya dönüştürdüğünüz tüm web siteleri, alan adları, logolar, grafikler ve içeriklerin fikri mülkiyet haklarının size ait olduğunu veya gerekli izinlere sahip olduğunuzu taahhüt etmektesiniz. Telif hakkı ihlali oluşturan veya yasalara aykırı içeriklerin sarmalanmasından doğan hukuki sorumluluk tamamen kullanıcıya aittir.
+      </p>
+
+      <h2>4. Üçüncü Taraf Hizmetler ve Mağaza Politikaları</h2>
+      <p>
+        Orvyna ile üretilen uygulamaların Apple App Store ve Google Play Store mağazalarında yayınlanması, ilgili mağazaların kendi inceleme yönergelerine (Apple App Store Review Guidelines ve Google Play Developer Program Policies) tabidir. Orvyna, üçüncü taraf platformların mağaza onay kararlarından doğrudan sorumlu tutulamaz.
+      </p>
+
+      <h2>5. Sorumluluk Sınırı</h2>
+      <p>
+        Yazılım "olduğu gibi" (AS IS) esasıyla sunulmaktadır. Geliştirici, yazılımın kesintisiz veya hatasız çalışacağını garanti etmez; doğrudan veya dolaylı veri kayıplarından yasal sınırların izin verdiği ölçüde sorumlu değildir.
+      </p>
+
+      <h2>6. İletişim</h2>
+      <p>
+        Kullanım koşullarıyla ilgili sorularınız için bizimle <a href="mailto:dev@onuraksoy.com.tr">dev@onuraksoy.com.tr</a> üzerinden iletişime geçebilirsiniz.
+      </p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-container">
+      <div class="brand">
+        <div class="brand-icon" style="width:28px;height:28px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <span style="font-size:16px;">Orvyna</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="privacy.html">Gizlilik Politikası</a></li>
+        <li><a href="terms.html">Kullanım Koşulları</a></li>
+        <li><a href="https://github.com/oaonuraksoy/orvyna-builder" target="_blank" rel="noopener">GitHub</a></li>
+      </ul>
+      <p class="copy">© 2026 Orvyna. Tüm hakları saklıdır. İletişim: dev@onuraksoy.com.tr</p>
+    </div>
+  </footer>
+
+</body>
+</html>
