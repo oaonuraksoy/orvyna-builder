@@ -14,6 +14,9 @@ class ShimmerLoadingView extends StatelessWidget {
   final bool? splashShowLoadingBar;
   final String? splashLoadingText;
 
+  /// Uygulamadan uygulamaya açılış düzenini değiştiren sabit değer.
+  final int variantSeed;
+
   const ShimmerLoadingView({
     super.key,
     required this.theme,
@@ -23,6 +26,7 @@ class ShimmerLoadingView extends StatelessWidget {
     this.splashShowTitle,
     this.splashShowLoadingBar,
     this.splashLoadingText,
+    this.variantSeed = 0,
   });
 
   @override
@@ -111,7 +115,8 @@ class ShimmerLoadingView extends StatelessWidget {
           ),
 
           // 2. Merkez Splash & Loading Bar Katmanı (Tam Dikey ve Yatay Merkezleme)
-          Center(
+          Align(
+            alignment: const [Alignment.center, Alignment(0, 0.55), Alignment(0, -0.45)][variantSeed % 3],
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 32.0),
               padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 28.0),

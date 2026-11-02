@@ -10,6 +10,7 @@ import 'services/notification_service.dart';
 import 'services/admob_service.dart';
 import 'services/permission_service.dart';
 import 'widgets/custom_page_view.dart';
+import 'widgets/about_app_page.dart';
 import 'widgets/custom_webview.dart';
 import 'widgets/floating_support_button.dart';
 
@@ -238,6 +239,12 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
 
   String? _startupPendingUrl;
 
+  void _openAbout() {
+    Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => AboutAppPage(config: widget.config),
+    ));
+  }
+
   void _handleIncomingUrl(String url) {
     if (url.startsWith('custom://')) {
       final pageId = url.replaceFirst('custom://', '').trim();
@@ -394,6 +401,11 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
                 centerTitle: widget.config.webviewSettings.appBarCenterTitle,
                 actions: [
                   IconButton(
+                    icon: const Icon(Icons.info_outline_rounded, size: 22.0),
+                    tooltip: 'Hakkında',
+                    onPressed: _openAbout,
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.refresh_rounded, size: 22.0),
                     tooltip: 'Yenile',
                     onPressed: () {
@@ -448,6 +460,14 @@ class _MainEngineScreenState extends State<MainEngineScreen> with WidgetsBinding
                           ],
                         ),
                       ),
+                    ),
+                    ListTile(
+                      leading: const Icon(Icons.info_outline_rounded),
+                      title: const Text('Hakkında'),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _openAbout();
+                      },
                     ),
                     ...activeNavItems.map((item) {
                       return ListTile(

@@ -3,7 +3,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
+import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import '../models/app_config.dart';
 import '../services/adblock_service.dart';
@@ -342,6 +344,7 @@ class CustomWebViewState extends State<CustomWebView> {
               splashShowTitle: widget.config.theme.splashShowTitle,
               splashShowLoadingBar: widget.config.theme.splashShowLoadingBar,
               splashLoadingText: widget.config.theme.splashLoadingText,
+              variantSeed: widget.config.appInfo.packageName.codeUnits.fold<int>(0, (a, b) => a + b),
             ),
           ),
         ),
@@ -511,8 +514,10 @@ class CustomWebViewState extends State<CustomWebView> {
             final count = (data['count'] as num?)?.toInt() ?? 0;
             final targetId = data['id']?.toString();
             debugPrint('[JSBridge - SetBadge] Target: $targetId, Count: $count');
+            await _updateBadge(count);
             return {'status': 'success', 'action': 'setBadge', 'count': count};
           } else if (action == 'requestReview') {
+            if (!await _isFromOwnSite(controller)) return {'status': 'denied'};
             debugPrint('[JSBridge - RequestReview] In-App Review tetiklendi');
             final reviewService = InAppReviewService(
               config: widget.config.inAppReview,
@@ -520,7 +525,7 @@ class CustomWebViewState extends State<CustomWebView> {
             );
             final triggered = await reviewService.requestReview(
               context: mounted ? context : null,
-              force: true,
+              force: false,
             );
             return {'status': 'success', 'action': 'requestReview', 'triggered': triggered};
           } else if (action == 'share') {
@@ -528,8 +533,10 @@ class CustomWebViewState extends State<CustomWebView> {
             final text = data['text']?.toString() ?? '';
             final url = data['url']?.toString() ?? '';
             debugPrint('[JSBridge - Share] Title: $title, Text: $text, Url: $url');
+            await _share(title, [text, url].where((e) => e.isNotEmpty).join(' '));
             return {'status': 'success', 'action': 'share'};
           } else if (action == 'requestBiometrics') {
+            if (!await _isFromOwnSite(controller)) return {'status': 'denied'};
             final reason = data['reason']?.toString();
             try {
               final bioService = BiometricService(config: widget.config.biometric);
@@ -555,13 +562,15 @@ class CustomWebViewState extends State<CustomWebView> {
       return {'success': true, 'event': eventName};
     };
 
-    final setBadgeHandler = (List<dynamic> args) {
+    final setBadgeHandler = (List<dynamic> args) async {
       final count = (args.isNotEmpty && args[0] is num) ? (args[0] as num).toInt() : 0;
       debugPrint('[Orvyna JS API] setBadge: $count');
+      await _updateBadge(count);
       return {'success': true, 'badgeCount': count};
     };
 
     final requestReviewHandler = (List<dynamic> args) async {
+      if (!await _isFromOwnSite(controller)) return {'success': false};
       debugPrint('[Orvyna JS API] requestReview requested');
       final reviewService = InAppReviewService(
         config: widget.config.inAppReview,
@@ -569,18 +578,23 @@ class CustomWebViewState extends State<CustomWebView> {
       );
       final triggered = await reviewService.requestReview(
         context: mounted ? context : null,
-        force: true,
+        force: false,
       );
       return {'success': true, 'triggered': triggered};
     };
 
-    final shareHandler = (List<dynamic> args) {
-      final shareData = args.isNotEmpty && args[0] is Map ? args[0] : {'text': args.toString()};
+    final shareHandler = (List<dynamic> args) async {
+      final shareData = args.isNotEmpty && args[0] is Map ? args[0] : {'text': args.join(' ')};
       debugPrint('[Orvyna JS API] share: $shareData');
+      await _share(
+        shareData['title']?.toString() ?? '',
+        [shareData['text'], shareData['url']].where((e) => e != null && e.toString().isNotEmpty).join(' '),
+      );
       return {'success': true, 'data': shareData};
     };
 
     final requestBiometricsHandler = (List<dynamic> args) async {
+      if (!await _isFromOwnSite(controller)) return {'success': false, 'authenticated': false};
       final customReason = args.isNotEmpty ? args[0]?.toString() : null;
       debugPrint('[Orvyna JS API] requestBiometrics requested: $customReason');
       try {
@@ -609,6 +623,35 @@ class CustomWebViewState extends State<CustomWebView> {
     controller.addJavaScriptHandler(handlerName: 'Web2App_requestReview', callback: requestReviewHandler);
     controller.addJavaScriptHandler(handlerName: 'Web2App_share', callback: shareHandler);
     controller.addJavaScriptHandler(handlerName: 'Web2App_requestBiometrics', callback: requestBiometricsHandler);
+  }
+
+  /// Hassas yerel özellikler yalnızca uygulamanın kendi sitesi açıkken kullanılabilir.
+  Future<bool> _isFromOwnSite(InAppWebViewController controller) async {
+    final current = (await controller.getUrl())?.host.toLowerCase() ?? '';
+    final own = (Uri.tryParse(widget.config.appInfo.webUrl)?.host ?? '').toLowerCase().replaceFirst('www.', '');
+    return own.isNotEmpty && (current == own || current.endsWith('.$own'));
+  }
+
+  Future<void> _updateBadge(int count) async {
+    try {
+      await AppBadgePlus.updateBadge(count);
+    } catch (e) {
+      debugPrint('[CustomWebView] Rozet güncellenemedi: $e');
+    }
+  }
+
+  Future<void> _share(String title, String text) async {
+    if (text.isEmpty || !mounted) return;
+    final size = MediaQuery.of(context).size;
+    try {
+      await SharePlus.instance.share(ShareParams(
+        text: text,
+        subject: title.isNotEmpty ? title : null,
+        sharePositionOrigin: Rect.fromLTWH(0, 0, size.width, size.height / 2),
+      ));
+    } catch (e) {
+      debugPrint('[CustomWebView] Paylaşım açılamadı: $e');
+    }
   }
 
   /// Kullanıcı tarafından tanımlanan özel CSS, JavaScript ve Viewport kurallarını sayfaya uygular

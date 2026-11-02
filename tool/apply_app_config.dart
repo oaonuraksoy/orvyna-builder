@@ -8,7 +8,7 @@ import 'package:image/image.dart' as img;
 ///
 /// Bu fonksiyon / script, enjekte edilmiş `app_config.json` dosyasını okuyarak:
 /// 1. AndroidManifest.xml içindeki `android:label` (@string/app_name), AdMob meta-data ve strings.xml değerlerini günceller.
-/// 2. android/app/build.gradle içindeki `applicationId` değerini günceller (namespace "com.orvyna.app" olarak sabit kalır).
+/// 2. android/app/build.gradle içindeki `applicationId` değerini günceller ve namespace değerini uygulamanın paket adına çevirir.
 /// 3. assets.icon_base64 ve splash_base64 verilerini Android mipmap-* ve iOS AppIcon varlıklarına dönüştürür.
 /// 4. signing.keystore_base64 verisinden `upload.keystore` ve `key.properties` dosyalarını üretir.
 /// 5. iOS Info.plist (`CFBundleDisplayName`) ve project.pbxproj (`PRODUCT_BUNDLE_IDENTIFIER`) değerlerini günceller.
@@ -170,6 +170,7 @@ void applyAppConfig({
 
   if (platform == 'all' || platform == 'android') {
     _syncAndroidPermissions(androidRoot, permissions);
+    _writeMainActivity(androidRoot, packageName);
   }
   if (platform == 'all' || platform == 'ios') {
     _syncIosUsageDescriptions(iosRoot, appName, permissions);
@@ -245,6 +246,18 @@ img.Image _makeOpaqueRgb(img.Image image) {
   img.fill(opaqueCanvas, color: img.ColorRgb8(255, 255, 255));
   img.compositeImage(opaqueCanvas, image);
   return opaqueCanvas;
+}
+
+/// MainActivity sınıfını uygulamanın kendi paketine taşır.
+void _writeMainActivity(String androidRoot, String packageName) {
+  final kotlinRoot = Directory('$androidRoot/app/src/main/kotlin');
+  if (kotlinRoot.existsSync()) kotlinRoot.deleteSync(recursive: true);
+  const reserved = {'as', 'break', 'class', 'continue', 'do', 'else', 'false', 'for', 'fun', 'if', 'in', 'interface', 'is', 'null', 'object', 'package', 'return', 'super', 'this', 'throw', 'true', 'try', 'typealias', 'typeof', 'val', 'var', 'when', 'while'};
+  final segments = packageName.split('.');
+  final declared = segments.map((part) => reserved.contains(part) ? '`$part`' : part).join('.');
+  File('${kotlinRoot.path}/${segments.join('/')}/MainActivity.kt')
+    ..createSync(recursive: true)
+    ..writeAsStringSync('package $declared\n\nimport io.flutter.embedding.android.FlutterActivity\n\nclass MainActivity : FlutterActivity()\n', encoding: utf8);
 }
 
 /// Manifest izinlerini yalnızca kullanıcının açtığı özelliklere göre düzenler.
@@ -326,15 +339,11 @@ void _applyAndroidConfig({
       RegExp(r'android:label="[^"]*"'),
       'android:label="@string/app_name"',
     );
-    if (manifestContent.contains('package="')) {
-      manifestContent = manifestContent.replaceAll(
-        RegExp(r'package="[^"]*"'),
-        'package="com.orvyna.app"',
-      );
-    }
+    // Yeni Android Gradle sürümleri manifestte package özniteliğini kabul etmez.
+    manifestContent = manifestContent.replaceFirst(RegExp(r'\s+package="[^"]*"'), '');
     manifestContent = manifestContent.replaceAll(
       RegExp(r'android:name="(?:\.|\w+(\.\w+)*\.)MainActivity"'),
-      'android:name="com.orvyna.app.MainActivity"',
+      'android:name="$packageName.MainActivity"',
     );
 
     // AdMob Android Yapılandırması (APPLICATION_ID Meta-Data Entegrasyonu)
@@ -410,7 +419,7 @@ void _applyAndroidConfig({
     }
 
     manifestFile.writeAsStringSync(manifestContent, encoding: utf8);
-    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="com.orvyna.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
+    print('  ✓ AndroidManifest.xml güncellendi (android:label="@string/app_name", MainActivity="$packageName.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   } else {
     manifestFile.parent.createSync(recursive: true);
     final permBuffer = StringBuffer();
@@ -428,15 +437,14 @@ void _applyAndroidConfig({
         ? '        <meta-data\n            android:name="com.google.android.gms.ads.APPLICATION_ID"\n            android:value="$admobAppId"/>\n'
         : '';
 
-    manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.orvyna.app">
+    manifestFile.writeAsStringSync('''<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 ${permBuffer.toString().trimRight()}
     <application
         android:label="@string/app_name"
         android:name="\${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
-            android:name="com.orvyna.app.MainActivity"
+            android:name="$packageName.MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:theme="@style/LaunchTheme"
@@ -454,7 +462,7 @@ $admobTag        <meta-data
     </application>
 </manifest>
 ''', encoding: utf8);
-    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="com.orvyna.app.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
+    print('  ✓ AndroidManifest.xml oluşturuldu (android:label="@string/app_name", MainActivity="$packageName.MainActivity", AdMob=${isAdmobEnabled ? "Açık" : "Kapalı"}, Biyometrik=${isBiometricEnabled ? "Açık" : "Kapalı"}, Push=${isPushEnabled ? "Açık" : "Kapalı"})');
   }
 
   // 2. strings.xml
@@ -520,10 +528,10 @@ $admobTag        <meta-data
     );
     content = content.replaceAll(
       RegExp(r'namespace\s*=?\s*["\x27][^"\x27]+["\x27]'),
-      'namespace = "com.orvyna.app"',
+      'namespace = "$packageName"',
     );
     appBuildGradle.writeAsStringSync(content, encoding: utf8);
-    print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName", namespace="com.orvyna.app")');
+    print('  ✓ android/app/build.gradle güncellendi (applicationId="$packageName", namespace="$packageName")');
   } else {
     appBuildGradle.parent.createSync(recursive: true);
     appBuildGradle.writeAsStringSync('''plugins {
@@ -539,8 +547,8 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.orvyna.app"
-    compileSdk = 36
+    namespace = "$packageName"
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

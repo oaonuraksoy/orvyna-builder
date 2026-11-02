@@ -113,8 +113,8 @@ void main() {
       final manifest = File('${tempDir.path}/android/app/src/main/AndroidManifest.xml');
       final manifestContent = manifest.readAsStringSync(encoding: utf8);
       expect(manifestContent, contains('android:label="@string/app_name"'));
-      expect(manifestContent, contains('package="com.orvyna.app"'));
-      expect(manifestContent, contains('android:name="com.orvyna.app.MainActivity"'));
+      expect(manifestContent, isNot(contains('package=')));
+      expect(manifestContent, contains('android:name="com.mysuper.app.MainActivity"'));
       expect(manifestContent, contains('com.google.android.gms.ads.APPLICATION_ID'));
       expect(manifestContent, contains('ca-app-pub-3940256099942544~3347511713'));
 
@@ -128,7 +128,7 @@ void main() {
       final buildGradle = File('${tempDir.path}/android/app/build.gradle');
       final gradleContent = buildGradle.readAsStringSync(encoding: utf8);
       expect(gradleContent, contains('applicationId = "com.mysuper.app"'));
-      expect(gradleContent, contains('namespace = "com.orvyna.app"'));
+      expect(gradleContent, contains('namespace = "com.mysuper.app"'));
 
       // 3. Android Mipmap Icons & Adaptive Icon Verification
       final mipmapHdpi = File('${tempDir.path}/android/app/src/main/res/mipmap-hdpi/ic_launcher.png');
@@ -182,6 +182,9 @@ void main() {
       final appIcon1024 = File('${tempDir.path}/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png');
       expect(appIcon1024.existsSync(), isTrue);
       expect(appIcon1024.lengthSync(), greaterThan(0));
+
+      final activity = File('${tempDir.path}/android/app/src/main/kotlin/com/mysuper/app/MainActivity.kt');
+      expect(activity.readAsStringSync(encoding: utf8), contains('package com.mysuper.app'));
 
       // 8. Secret'lar diske veya paketlenen config'e yazılmaz
       expect(File('${tempDir.path}/ios/fastlane/AuthKey_D383X7Y27K.p8').existsSync(), isFalse);

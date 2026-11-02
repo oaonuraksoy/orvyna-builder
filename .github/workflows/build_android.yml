@@ -1,8 +1,14 @@
 name: Android Build & Google Play
+run-name: Build ${{ inputs.project_id }}
 
 on:
   workflow_dispatch:
     inputs:
+      project_id:
+        description: 'Şifreli proje kimliği'
+        required: false
+        default: ''
+        type: string
       build_type:
         description: 'Derleme türü'
         required: true
@@ -34,32 +40,34 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: android-${{ inputs.project_id }}
+
 jobs:
   build-android:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
+      PROJECT_ID: ${{ inputs.project_id }}
       APP_VERSION: ${{ inputs.app_version }}
       BUILD_NUMBER: ${{ inputs.build_number }}
       ENGINE_REF: ${{ inputs.engine_ref }}
       BUILD_TYPE: ${{ inputs.build_type }}
-      PLAY_TRACK: ${{ inputs.play_track }}
 
     steps:
       - name: Girdileri doğrula
         run: |
+          [[ -z "$PROJECT_ID" || "$PROJECT_ID" =~ ^[a-f0-9]{16}$ ]] || { echo "::error::Geçersiz proje kimliği"; exit 1; }
           [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]] || { echo "::error::Geçersiz sürüm adı"; exit 1; }
           [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::Geçersiz derleme numarası"; exit 1; }
           [[ "$ENGINE_REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "::error::Geçersiz motor sürümü"; exit 1; }
 
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Kullanıcı ayarlarını koru ve motoru güncelle
+      - name: Motoru güncelle
         run: |
-          cp assets/config/app_config.json "$RUNNER_TEMP/app_config.json"
           git fetch --depth=1 https://github.com/oaonuraksoy/orvyna-builder.git "$ENGINE_REF"
           git checkout FETCH_HEAD -- .
-          cp "$RUNNER_TEMP/app_config.json" assets/config/app_config.json
 
       - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
@@ -75,18 +83,20 @@ jobs:
       - name: Bağımlılıkları yükle
         run: flutter pub get
 
-      - name: Yapılandırmayı ve imzalamayı uygula
+      - name: Şifreli proje paketini aç
+        if: inputs.project_id != ''
         env:
-          ORVYNA_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ORVYNA_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ORVYNA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ORVYNA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ORVYNA_PROJECT_KEY: ${{ secrets[format('ORVYNA_KEY_{0}', inputs.project_id)] }}
+        run: dart tool/project_bundle.dart open --project="$PROJECT_ID"
+
+      - name: Yapılandırmayı ve imzalamayı uygula
         run: dart tool/apply_app_config.dart --platform=android
 
       - name: Mağaza yüklemesi için gerçek imzayı zorunlu kıl
         if: inputs.play_track != 'none'
         run: |
-          [ -f android/key.properties ] || { echo "::error::Google Play için keystore gerekli. Studio'da 5. adımda keystore tanımlayın."; exit 1; }
+          [ -f android/key.properties ] || { echo "::error::Google Play için keystore gerekli."; exit 1; }
+          [ -n "${ORVYNA_PLAY_JSON:-}" ] || { echo "::error::Google Play hizmet hesabı anahtarı eksik."; exit 1; }
 
       - name: Derle
         run: |
@@ -94,25 +104,30 @@ jobs:
           [ "$BUILD_TYPE" = "apk" ] && target=apk
           flutter build "$target" --release --no-pub --build-name="$APP_VERSION" --build-number="$BUILD_NUMBER"
 
-      - name: Paket adını oku
-        id: pkg
-        run: echo "name=$(python3 -c "import json;print(json.load(open('assets/config/app_config.json'))['app_info']['package_name'])")" >> "$GITHUB_OUTPUT"
-
       - name: Google Play'e yükle
         if: inputs.play_track != 'none'
         uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb # v1.1.3
         with:
-          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-          packageName: ${{ steps.pkg.outputs.name }}
+          serviceAccountJson: ${{ env.ORVYNA_PLAY_JSON }}
+          packageName: ${{ env.ORVYNA_PACKAGE }}
           releaseFiles: build/app/outputs/bundle/release/app-release.aab
           track: ${{ inputs.play_track }}
           status: completed
 
+      - name: Paketi şifrele
+        if: inputs.play_track == 'none' && inputs.project_id != ''
+        env:
+          ORVYNA_PROJECT_KEY: ${{ secrets[format('ORVYNA_KEY_{0}', inputs.project_id)] }}
+        run: |
+          src=build/app/outputs/bundle/release/app-release.aab
+          [ "$BUILD_TYPE" = "apk" ] && src=build/app/outputs/flutter-apk/app-release.apk
+          mkdir -p build/sealed
+          dart tool/project_bundle.dart seal --in="$src" --out="build/sealed/app-release.$BUILD_TYPE.enc"
+
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: inputs.play_track == 'none' && inputs.project_id != ''
         with:
           name: release-${{ inputs.build_type }}
-          path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+          path: build/sealed/*.enc
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 3
