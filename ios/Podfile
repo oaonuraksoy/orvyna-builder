@@ -1,5 +1,7 @@
 # Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+platform :ios, '15.0'
+
+require 'json'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +41,17 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    # permission_handler yalnızca açık özelliklerin izin kodunu derler (Apple ITMS-90683 uyarısını önler).
+    perms = (JSON.parse(File.read(File.join(__dir__, '..', 'assets', 'config', 'app_config.json')))['permissions'] rescue {}) || {}
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] += [
+        "PERMISSION_CAMERA=#{perms['camera'] ? 1 : 0}",
+        "PERMISSION_MICROPHONE=#{perms['microphone'] ? 1 : 0}",
+        "PERMISSION_LOCATION=#{perms['location'] ? 1 : 0}",
+        "PERMISSION_PHOTOS=#{perms['storage'] ? 1 : 0}",
+        "PERMISSION_NOTIFICATIONS=#{perms['notifications'] ? 1 : 0}",
+      ]
+    end
   end
 end

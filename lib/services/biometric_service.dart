@@ -81,11 +81,8 @@ class BiometricService {
         
         final authenticated = await localAuth.authenticate(
           localizedReason: customReason ?? (config.promptSubtitle.isNotEmpty ? config.promptSubtitle : 'Uygulamaya erişmek için doğrulama gerekiyor'),
-          options: AuthenticationOptions(
-            useErrorDialogs: true,
-            stickyAuth: true,
-            biometricOnly: !config.allowFallback,
-          ),
+          persistAcrossBackgrounding: true,
+          biometricOnly: !config.allowFallback,
         );
         
         if (authenticated) {
@@ -98,14 +95,8 @@ class BiometricService {
       return false;
     }
 
-    // Fallback varsayılan doğrulama (Haptic Feedback ile)
-    try {
-      HapticFeedback.mediumImpact();
-      markUnlocked();
-      return true;
-    } catch (_) {
-      return false;
-    }
+    // Ekran bağlamı yoksa doğrulama yapılamaz; kilit açılmaz.
+    return false;
   }
 
   /// Şık ve modern biyometrik doğrulama diyalogu / alt paneli gösterir

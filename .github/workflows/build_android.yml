@@ -1,95 +1,118 @@
-name: Android AAB & APK Build
+name: Android Build & Google Play
 
 on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: 'Derleme Türü (apk, aab, both)'
+        description: 'Derleme türü'
         required: true
-        default: 'both'
+        default: 'aab'
         type: choice
-        options:
-          - 'both'
-          - 'apk'
-          - 'aab'
+        options: ['apk', 'aab']
       app_version:
-        description: 'Uygulama Sürüm Adı (örn: 1.0.0)'
-        required: false
+        description: 'Sürüm adı (örn: 1.0.0)'
+        required: true
         default: '1.0.0'
         type: string
       build_number:
-        description: 'Derleme Numarası (örn: 1)'
-        required: false
+        description: 'Derleme numarası'
+        required: true
         default: '1'
         type: string
-      app_config_json:
-        description: 'Özel app_config.json içeriği (Opsiyonel JSON string)'
+      play_track:
+        description: 'Google Play kanalı (none = yalnızca derle)'
+        required: true
+        default: 'none'
+        type: choice
+        options: ['none', 'internal', 'alpha', 'beta', 'production']
+      engine_ref:
+        description: 'Orvyna motor sürümü'
         required: false
+        default: 'main'
         type: string
+
+permissions:
+  contents: read
 
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      APP_VERSION: ${{ inputs.app_version }}
+      BUILD_NUMBER: ${{ inputs.build_number }}
+      ENGINE_REF: ${{ inputs.engine_ref }}
+      BUILD_TYPE: ${{ inputs.build_type }}
+      PLAY_TRACK: ${{ inputs.play_track }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Girdileri doğrula
+        run: |
+          [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,3}$ ]] || { echo "::error::Geçersiz sürüm adı"; exit 1; }
+          [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::Geçersiz derleme numarası"; exit 1; }
+          [[ "$ENGINE_REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "::error::Geçersiz motor sürümü"; exit 1; }
 
-      - name: Set up Java JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Kullanıcı ayarlarını koru ve motoru güncelle
+        run: |
+          cp assets/config/app_config.json "$RUNNER_TEMP/app_config.json"
+          git fetch --depth=1 https://github.com/oaonuraksoy/orvyna-builder.git "$ENGINE_REF"
+          git checkout FETCH_HEAD -- .
+          cp "$RUNNER_TEMP/app_config.json" assets/config/app_config.json
+
+      - uses: actions/setup-java@c5195efecf7bdfc987ee8bae7a71cb8b11521c00 # v4.7.1
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      - uses: subosito/flutter-action@f2c4f6686ca8e8d6e6d0f28410eeef506ed66aff # v2.18.0
         with:
-          channel: 'stable'
+          channel: stable
+          flutter-version: '3.47.9'
           cache: true
-          cache-key: "flutter-:channel:-:version:"
 
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
-
-      - name: Enjekte Edilmiş app_config.json Uygula
-        if: "${{ github.event.inputs.app_config_json != '' }}"
-        env:
-          CONFIG_JSON: ${{ github.event.inputs.app_config_json }}
-        run: |
-          echo "$CONFIG_JSON" > assets/config/app_config.json
-
-      - name: Install Dependencies
+      - name: Bağımlılıkları yükle
         run: flutter pub get
 
-      - name: Yapılandırma ve Varlıkları Uygula (Paket Adı, İkon, Keystore)
+      - name: Yapılandırmayı ve imzalamayı uygula
+        env:
+          ORVYNA_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ORVYNA_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ORVYNA_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ORVYNA_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: dart tool/apply_app_config.dart --platform=android
 
-      - name: Build Android APK
-        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
-        run: flutter build apk --release --no-pub --android-skip-build-dependency-validation --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+      - name: Mağaza yüklemesi için gerçek imzayı zorunlu kıl
+        if: inputs.play_track != 'none'
+        run: |
+          [ -f android/key.properties ] || { echo "::error::Google Play için keystore gerekli. Studio'da 5. adımda keystore tanımlayın."; exit 1; }
 
-      - name: Build Android App Bundle (AAB)
-        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
-        run: flutter build appbundle --release --no-pub --android-skip-build-dependency-validation --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+      - name: Derle
+        run: |
+          target=appbundle
+          [ "$BUILD_TYPE" = "apk" ] && target=apk
+          flutter build "$target" --release --no-pub --build-name="$APP_VERSION" --build-number="$BUILD_NUMBER"
 
-      - name: Upload APK Artifact
-        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'apk' || github.event_name == 'push' }}"
-        uses: actions/upload-artifact@v4
+      - name: Paket adını oku
+        id: pkg
+        run: echo "name=$(python3 -c "import json;print(json.load(open('assets/config/app_config.json'))['app_info']['package_name'])")" >> "$GITHUB_OUTPUT"
+
+      - name: Google Play'e yükle
+        if: inputs.play_track != 'none'
+        uses: r0adkll/upload-google-play@935ef9c68bb393a8e6116b1575626a7f5be3a7fb # v1.1.3
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: ${{ steps.pkg.outputs.name }}
+          releaseFiles: build/app/outputs/bundle/release/app-release.aab
+          track: ${{ inputs.play_track }}
+          status: completed
 
-      - name: Upload AAB Artifact
-        if: "${{ github.event.inputs.build_type == 'both' || github.event.inputs.build_type == 'aab' || github.event.inputs.build_type == 'appbundle' || github.event_name == 'push' }}"
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: release-aab
-          path: build/app/outputs/bundle/release/app-release.aab
+          name: release-${{ inputs.build_type }}
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/bundle/release/app-release.aab
+          if-no-files-found: error
+          retention-days: 14

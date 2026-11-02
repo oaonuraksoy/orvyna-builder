@@ -11,22 +11,22 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_inappwebview: ^6.1.5
-  google_mobile_ads: ^5.2.0
+  google_mobile_ads: ^9.2.0
   onesignal_flutter: ^5.3.3
-  permission_handler: ^11.4.0
+  permission_handler: ^13.0.2
   url_launcher: ^6.3.1
-  connectivity_plus: ^6.1.4
-  shimmer: ^3.0.0
+  connectivity_plus: ^7.3.2
+  shimmer: ^4.0.0
   flutter_svg: ^2.0.17
   image: ^4.5.4
-  local_auth: ^2.3.0
+  local_auth: ^3.0.2
   in_app_review: ^2.0.9
-  device_info_plus: ^10.1.0
+  device_info_plus: ^13.3.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
 
 flutter:
   uses-material-design: true

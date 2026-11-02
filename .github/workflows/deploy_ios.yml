@@ -1,104 +1,103 @@
-name: iOS Build & TestFlight Deploy
+name: iOS Build & App Store Connect
 
 on:
   workflow_dispatch:
     inputs:
       deploy_target:
-        description: 'Dağıtım Hedefi'
+        description: 'Hedef (testflight = imzala ve App Store Connect''e yükle, verify = imzasız derleme testi)'
         required: true
         default: 'testflight'
         type: choice
-        options:
-          - 'testflight'
-          - 'ipa_archive_only'
+        options: ['testflight', 'verify']
       app_version:
-        description: 'Uygulama Sürüm Adı (örn: 1.0.0)'
-        required: false
+        description: 'Sürüm adı (örn: 1.0.0)'
+        required: true
         default: '1.0.0'
         type: string
       build_number:
-        description: 'Derleme Numarası (örn: 1)'
-        required: false
+        description: 'Derleme numarası'
+        required: true
         default: '1'
         type: string
-      app_config_json:
-        description: 'Özel app_config.json içeriği (Opsiyonel JSON string)'
+      engine_ref:
+        description: 'Orvyna motor sürümü'
         required: false
+        default: 'main'
         type: string
+
+permissions:
+  contents: read
 
 jobs:
   build-ios:
-    runs-on: macos-14
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      APP_VERSION: ${{ inputs.app_version }}
+      BUILD_NUMBER: ${{ inputs.build_number }}
+      ENGINE_REF: ${{ inputs.engine_ref }}
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
-        with:
-          channel: 'stable'
-          cache: true
-          cache-key: "flutter-:channel:-:version:"
-
-      - name: Cache Flutter dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pub-
-
-      - name: Cache CocoaPods
-        uses: actions/cache@v4
-        with:
-          path: |
-            ios/Pods
-            ~/.cocoapods
-          key: ${{ runner.os }}-pods-${{ hashFiles('**/Podfile.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-pods-
-
-      - name: Enjekte Edilmiş app_config.json Uygula
-        if: "${{ github.event.inputs.app_config_json != '' }}"
-        env:
-          CONFIG_JSON: ${{ github.event.inputs.app_config_json }}
+      - name: Girdileri doğrula
         run: |
-          echo "::add-mask::$CONFIG_JSON"
-          echo "$CONFIG_JSON" > assets/config/app_config.json
+          [[ "$APP_VERSION" =~ ^[0-9]+(\.[0-9]+){0,2}$ ]] || { echo "::error::Geçersiz sürüm adı"; exit 1; }
+          [[ "$BUILD_NUMBER" =~ ^[0-9]+$ ]] || { echo "::error::Geçersiz derleme numarası"; exit 1; }
+          [[ "$ENGINE_REF" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "::error::Geçersiz motor sürümü"; exit 1; }
 
-      - name: Install Flutter Dependencies
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Kullanıcı ayarlarını koru ve motoru güncelle
+        run: |
+          cp assets/config/app_config.json "$RUNNER_TEMP/app_config.json"
+          git fetch --depth=1 https://github.com/oaonuraksoy/orvyna-builder.git "$ENGINE_REF"
+          git checkout FETCH_HEAD -- .
+          cp "$RUNNER_TEMP/app_config.json" assets/config/app_config.json
+
+      - uses: subosito/flutter-action@f2c4f6686ca8e8d6e6d0f28410eeef506ed66aff # v2.18.0
+        with:
+          channel: stable
+          flutter-version: '3.47.9'
+          cache: true
+
+      - name: Bağımlılıkları yükle
         run: flutter pub get
 
-      - name: Yapılandırma ve Varlıkları Uygula (Bundle ID, İkon, App Store Connect)
+      - name: Yapılandırmayı uygula
         run: dart tool/apply_app_config.dart --platform=ios
 
-      - name: Build iOS IPA (No Codesign for Archive)
-        if: "${{ github.event.inputs.deploy_target == 'ipa_archive_only' }}"
-        run: flutter build ios --release --no-codesign --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
+      - name: Flutter derlemesi (imzasız)
+        run: flutter build ios --release --no-codesign --no-pub --build-name="$APP_VERSION" --build-number="$BUILD_NUMBER"
 
-      - name: Build and Deploy to TestFlight via Fastlane
-        if: "${{ github.event.inputs.deploy_target == 'testflight' }}"
+      - name: İmzala ve App Store Connect'e yükle
+        if: inputs.deploy_target == 'testflight'
         env:
-          APP_STORE_CONNECT_API_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY }}
-          APPLE_CERTIFICATE_PASS: ${{ secrets.APPLE_CERTIFICATE_PASS }}
-        working-directory: ./ios
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8_BASE64: ${{ secrets.ASC_KEY_P8_BASE64 }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
-          echo "::add-mask::${{ secrets.APP_STORE_CONNECT_API_KEY }}"
-          echo "::add-mask::${{ secrets.APPLE_CERTIFICATE_PASS }}"
-          if [ -f "Fastfile" ] || [ -f "fastlane/Fastfile" ]; then
-            bundle exec fastlane beta
-          else
-            echo "Fastfile mevcut değil, standart flutter build ipa çalıştırılıyor..."
-            cd ..
-            flutter build ipa --release --no-codesign --no-pub --build-name=${{ github.event.inputs.app_version || '1.0.0' }} --build-number=${{ github.event.inputs.build_number || '1' }}
-          fi
-
-      - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-archive
-          path: |
-            build/ios/archive/*.xcarchive
-            build/ios/ipa/*.ipa
-          if-no-files-found: ignore
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8_BASE64 APPLE_TEAM_ID; do
+            [ -n "${!v}" ] || { echo "::error::$v eksik. Studio'da 5. adımdan Apple bilgilerini tanımlayın."; exit 1; }
+          done
+          KEY_PATH="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          echo "$ASC_KEY_P8_BASE64" | base64 --decode > "$KEY_PATH"
+          trap 'rm -f "$KEY_PATH"' EXIT
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release \
+            -sdk iphoneos -destination 'generic/platform=iOS' \
+            -archivePath build/ios/archive/Runner.xcarchive archive \
+            DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGN_STYLE=Automatic "${AUTH[@]}"
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>$APPLE_TEAM_ID</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>uploadSymbols</key><true/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -exportPath build/ios/ipa "${AUTH[@]}"

@@ -96,11 +96,17 @@ void applyAppConfig({
   final String iconUrl = assets['icon_url']?.toString() ?? '';
   final String splashUrl = assets['splash_url']?.toString() ?? '';
 
-  final String keystoreBase64 = signing['keystore_base64']?.toString() ?? '';
-  final String keystorePassword = signing['keystore_password']?.toString() ?? '';
-  final String rawKeyAlias = signing['key_alias']?.toString() ?? '';
+  // CI'da imzalama bilgileri yalnızca GitHub Actions Secrets üzerinden, ortam değişkeniyle gelir.
+  String secretValue(String envName, dynamic configValue) {
+    final fromEnv = Platform.environment[envName]?.trim() ?? '';
+    return fromEnv.isNotEmpty ? fromEnv : (configValue?.toString() ?? '');
+  }
+
+  final String keystoreBase64 = secretValue('ORVYNA_KEYSTORE_BASE64', signing['keystore_base64']);
+  final String keystorePassword = secretValue('ORVYNA_KEYSTORE_PASSWORD', signing['keystore_password']);
+  final String rawKeyAlias = secretValue('ORVYNA_KEY_ALIAS', signing['key_alias']);
   final String keyAlias = rawKeyAlias.trim().isNotEmpty ? rawKeyAlias.trim() : 'upload';
-  final String rawKeyPassword = signing['key_password']?.toString() ?? '';
+  final String rawKeyPassword = secretValue('ORVYNA_KEY_PASSWORD', signing['key_password']);
   final String keyPassword = rawKeyPassword.trim().isNotEmpty ? rawKeyPassword.trim() : keystorePassword;
 
   final String appStoreIssuerId = appStore['issuer_id']?.toString() ?? '';
@@ -160,6 +166,21 @@ void applyAppConfig({
       appStoreKeyId: appStoreKeyId,
       appStoreP8Base64: appStoreP8Base64,
     );
+  }
+
+  if (platform == 'all' || platform == 'android') {
+    _syncAndroidPermissions(androidRoot, permissions);
+  }
+  if (platform == 'all' || platform == 'ios') {
+    _syncIosUsageDescriptions(iosRoot, appName, permissions);
+  }
+
+  // Uygulama paketine gömülen config dosyasında imzalama bilgisi kalmamalıdır.
+  if (config.containsKey('signing') || config.containsKey('app_store_connect')) {
+    config.remove('signing');
+    config.remove('app_store_connect');
+    configFile.writeAsStringSync(const JsonEncoder.withIndent('  ').convert(config), encoding: utf8);
+    print('🔐 İmzalama bilgileri uygulama paketine girecek config dosyasından temizlendi.');
   }
 
   print('\n✅ [Orvyna] Tüm yapılandırmalar başarıyla uygulandı!\n');
@@ -224,6 +245,59 @@ img.Image _makeOpaqueRgb(img.Image image) {
   img.fill(opaqueCanvas, color: img.ColorRgb8(255, 255, 255));
   img.compositeImage(opaqueCanvas, image);
   return opaqueCanvas;
+}
+
+/// Manifest izinlerini yalnızca kullanıcının açtığı özelliklere göre düzenler.
+void _syncAndroidPermissions(String androidRoot, Map<String, dynamic> permissions) {
+  final manifest = File('$androidRoot/app/src/main/AndroidManifest.xml');
+  if (!manifest.existsSync()) return;
+  var content = manifest.readAsStringSync(encoding: utf8);
+  const groups = {
+    'camera': ['CAMERA'],
+    'microphone': ['RECORD_AUDIO'],
+    'location': ['ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION'],
+  };
+  groups.forEach((key, names) {
+    for (final name in names) {
+      content = content.replaceAll(
+        RegExp(r'\s*<uses-permission\s+[^>]*android:name="android\.permission\.' + name + r'"[^>]*/?>'),
+        '',
+      );
+      if (permissions[key] == true) {
+        content = content.replaceFirst(
+          '<application',
+          '<uses-permission android:name="android.permission.$name"/>\n    <application',
+        );
+      }
+    }
+  });
+  manifest.writeAsStringSync(content, encoding: utf8);
+}
+
+/// Açılan her izin için Apple'ın zorunlu kıldığı kullanım açıklamasını ekler, kapalı olanları kaldırır.
+void _syncIosUsageDescriptions(String iosRoot, String appName, Map<String, dynamic> permissions) {
+  final plist = File('$iosRoot/Runner/Info.plist');
+  if (!plist.existsSync()) return;
+  final safeName = appName.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  var content = plist.readAsStringSync(encoding: utf8);
+  final groups = {
+    'camera': {'NSCameraUsageDescription': '$safeName, web sayfasında fotoğraf veya video çekebilmeniz için kameraya erişir.'},
+    'microphone': {'NSMicrophoneUsageDescription': '$safeName, web sayfasında ses kaydedebilmeniz için mikrofona erişir.'},
+    'location': {'NSLocationWhenInUseUsageDescription': '$safeName, web sayfasında konumunuza dayalı içerik gösterebilmek için konumunuza erişir.'},
+    'storage': {'NSPhotoLibraryUsageDescription': '$safeName, web sayfasına görsel yükleyebilmeniz için fotoğraflarınıza erişir.'},
+  };
+  groups.forEach((key, entries) {
+    entries.forEach((name, text) {
+      content = content.replaceAll(RegExp(r'\s*<key>' + name + r'</key>\s*<string>[^<]*</string>'), '');
+      if (permissions[key] == true) {
+        content = content.replaceFirst(
+          RegExp(r'</dict>\s*</plist>'),
+          '\t<key>$name</key>\n\t<string>$text</string>\n</dict>\n</plist>',
+        );
+      }
+    });
+  });
+  plist.writeAsStringSync(content, encoding: utf8);
 }
 
 /// Android Proje Dosyalarını Günceller
@@ -480,8 +554,8 @@ android {
 
     defaultConfig {
         applicationId = "$packageName"
-        minSdk = 21
-        targetSdk = 35
+        minSdk = 24
+        targetSdk = 36
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }
@@ -928,52 +1002,6 @@ ${iosExtras.toString().trimRight()}
       print('  ✓ iOS AppIcon.appiconset 1024x1024 HD ikon varlıkları Cubic Antialiasing ile üretildi');
     } catch (e) {
       print('  ⚠️  iOS İkon çözülemedi: $e');
-    }
-  }
-
-  // 4. App Store Connect API Anahtarı (.p8) ve Fastlane Yapılandırması
-  if (appStoreP8Base64.isNotEmpty) {
-    try {
-      final p8Bytes = base64Decode(appStoreP8Base64.replaceAll(RegExp(r'\s+'), ''));
-      final fastlaneDir = Directory('$iosRoot/fastlane');
-      fastlaneDir.createSync(recursive: true);
-
-      final keyFileName = appStoreKeyId.isNotEmpty ? 'AuthKey_$appStoreKeyId.p8' : 'AuthKey.p8';
-      final p8File = File('${fastlaneDir.path}/$keyFileName');
-      p8File.writeAsBytesSync(p8Bytes);
-
-      File('$iosRoot/$keyFileName').writeAsBytesSync(p8Bytes);
-
-      final appFile = File('${fastlaneDir.path}/Appfile');
-      appFile.writeAsStringSync('''app_identifier("$packageName")
-apple_id("developer@orvyna.local")
-itc_team_id("$appStoreIssuerId")
-''', encoding: utf8);
-
-      final fastFile = File('${fastlaneDir.path}/Fastfile');
-      fastFile.writeAsStringSync('''default_platform(:ios)
-
-platform :ios do
-  desc "Push a new beta build to TestFlight"
-  lane :beta do
-    api_key = app_store_connect_api_key(
-      key_id: "$appStoreKeyId",
-      issuer_id: "$appStoreIssuerId",
-      key_filepath: "fastlane/$keyFileName",
-      duration: 1200,
-      in_house: false
-    )
-    pilot(
-      api_key: api_key,
-      app_identifier: "$packageName",
-      skip_waiting_for_build_processing: true
-    )
-  end
-end
-''', encoding: utf8);
-      print('  ✓ App Store Connect AuthKey (.p8), Appfile ve Fastfile TestFlight için yapılandırıldı');
-    } catch (e) {
-      print('  ⚠️  App Store Connect p8 Base64 çözülemedi: $e');
     }
   }
 }

@@ -44,8 +44,8 @@ android {
 
     defaultConfig {
         applicationId = "com.orvyna.app"
-        minSdk = 21
-        targetSdk = 35
+        minSdk = 24
+        targetSdk = 36
         versionCode = flutterVersionCode.toInteger()
         versionName = flutterVersionName
     }

@@ -183,13 +183,11 @@ void main() {
       expect(appIcon1024.existsSync(), isTrue);
       expect(appIcon1024.lengthSync(), greaterThan(0));
 
-      // 8. iOS Fastlane & AuthKey Verification
-      final p8Key = File('${tempDir.path}/ios/fastlane/AuthKey_D383X7Y27K.p8');
-      expect(p8Key.existsSync(), isTrue);
-
-      final fastfile = File('${tempDir.path}/ios/fastlane/Fastfile');
-      expect(fastfile.existsSync(), isTrue);
-      expect(fastfile.readAsStringSync(encoding: utf8), contains('D383X7Y27K'));
+      // 8. Secret'lar diske veya paketlenen config'e yazılmaz
+      expect(File('${tempDir.path}/ios/fastlane/AuthKey_D383X7Y27K.p8').existsSync(), isFalse);
+      final writtenConfig = json.decode(testConfigFile.readAsStringSync(encoding: utf8)) as Map<String, dynamic>;
+      expect(writtenConfig.containsKey('signing'), isFalse);
+      expect(writtenConfig.containsKey('app_store_connect'), isFalse);
     });
 
     test('applyAppConfig falls back to default Android icons when icon_base64 is empty', () {
